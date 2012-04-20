@@ -370,10 +370,7 @@ except:
 # in django it looks like that: if content_length > settings.FILE_UPLOAD_MAX_MEMORY_SIZE
 FILE_UPLOAD_MAX_MEMORY_SIZE = -1
 
-try:
-    from settings_local import *
-except:
-    pass
+from settings_local import *
 
 try:
     modify_globals(globals())
