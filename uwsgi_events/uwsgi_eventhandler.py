@@ -12,8 +12,8 @@ try:
     allowed_ips = getattr(local_config, "allowed_ips", ["127.0.0.1"])
     debug = getattr(local_config, "debug", False)
     secret = getattr(local_config, "UWSGI_ID_SECRET", None)
-except:
-    print "EventHandler: Could not load local settings, using default!"
+except BaseException as exc:
+    print "EventHandler: Could not load local settings, using default! Error: " + str (exc)
     debug = False
     secret = None
     allowed_ips = ["127.0.0.1"]
