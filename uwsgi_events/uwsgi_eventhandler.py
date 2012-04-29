@@ -1,16 +1,17 @@
 import uwsgi
 import bottle
-#from bottle import route, default_app, request, post, get
+import threading
+import hashlib
 import pickle
 
-import threading
+
 LOCK = threading.Lock()
-import hashlib
+
 
 try:
     import local_config
-    allowed_ips = getattr(local_config, "allowed_ips", ["127.0.0.1"])
-    debug = getattr(local_config, "debug", False)
+    allowed_ips = getattr(local_config, "ALLOWED_IPS", ["127.0.0.1"])
+    debug = getattr(local_config, "DEBUG", False)
     secret = getattr(local_config, "UWSGI_ID_SECRET", None)
 except BaseException as exc:
     print "EventHandler: Could not load local settings, using default! Error: " + str (exc)
@@ -18,44 +19,85 @@ except BaseException as exc:
     secret = None
     allowed_ips = ["127.0.0.1"]
 
-bottle.debug(debug)
+bottle.debug (debug)
+
 
 event = None
 
+
 @bottle.post('/demovibes/ajax/monitor/new/')
 def http_event_receiver():
+    """Serves request sent by HTTP from sockulf."""
+
     ip = bottle.request.environ.get('REMOTE_ADDR')
     if ip not in allowed_ips:
+        print "Rejected IP: " + ip
         return ip
-    data = bottle.request.forms.get('data')
-    data = pickle.loads(data)
-    event_receiver(data, 0)
+
+    try:
+        data = bottle.request.forms.get('data')
+        data = pickle.loads(data)
+
+        event_receiver(data, 0)
+    except BaseException as err:
+        print "Error handling request through HTTP: " + str (err)
+
     return "OK"
 
-def event_receiver(obj, id):
+
+def event_receiver (obj, id):
+    """Used directly by uwsgi to handle events sent by demovibes."""
+
     LOCK.acquire()
+
     global event
     event = obj
     uwsgi.green_unpause_all()
+
     LOCK.release()
 
 uwsgi.message_manager_marshal = event_receiver
 
-@bottle.get('/demovibes/ajax/monitor/:id#[0-9]+#/')
-def handler(id):
-    userid = bottle.request.GET.get('uid', None)
+
+@bottle.get ('/demovibes/ajax/monitor/:id#[0-9]+#/')
+def handler (id):
+    global event
+
+    # Validate user signature
+    userid = bottle.request.GET.get ('uid', None)
     if userid and secret:
         hash = hashlib.sha1("%s.%s" % (userid, secret)).hexdigest()
-        sign = bottle.request.GET.get('sign', "NA")
+        sign = bottle.request.GET.get ('sign', "NA")
         if hash != sign:
             userid = None
-    id = int(id)
-    if not event or event[1] <= id:
-        uwsgi.green_pause(60)
+
+    id = int (id)
+
+    LOCK.acquire()
+    myevent = event # We don't want update in a middle...'
+    LOCK.release()
+
+    # Event format: (list of events, recent event id)
+
+    # Lets sleep for awhile in case there is no interesting events
+    if not myevent or myevent[1] <= id:
+        uwsgi.green_pause (60)
+
+    LOCK.acquire()
     myevent = event
-    eventid = myevent[1]
-    levent = [x[1] for x in myevent[0] if x[0] > id and (x[2] == "N" or (userid and x[2] == int(userid)))]
-    levent = set(levent)
-    yield "\n".join(levent) + "\n!%s" % eventid
+    LOCK.release()
+
+    # One more try
+    if not myevent:
+        yield ""
+    else:
+        eventid = myevent[1]
+        levent = [x[1] for x in myevent[0] if x[0] > id and (x[2] == "N" or (userid and x[2] == int(userid)))]
+        levent = set(levent)
+
+        yield "\n".join(levent) + "\n!%s" % eventid
+
 
 application = bottle.default_app()
+
+#  LocalWords:  EventHandler sockulf uwsgi

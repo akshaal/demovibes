@@ -270,32 +270,19 @@ def get_latest_event():
     return curr
 
 def get_latest_event_lookup():
-    use_eventful = getattr(settings, 'USE_EVENTFUL', False)
-    if use_eventful:
-        host = getattr(settings, 'EVENTFUL_HOST', "127.0.0.1")
-        port = getattr(settings, 'EVENTFUL_PORT', 9911)
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(5)
-        try:
-            s.connect((host, port))
-            s.send("event::")
-            result = s.recv(1024)
-        except socket.timeout:
-            return 0
-        return result.strip()
-    else:
-        try:
-            return models.AjaxEvent.objects.order_by('-id')[0].id
-        except:
-            return 0
+    try:
+        return models.AjaxEvent.objects.order_by ('-id')[0].id
+    except:
+        return 0
 
-def add_oneliner(user, message):
+def add_oneliner (user, message):
     message = message.strip()
-    can_post = user.is_superuser or not user.has_perm('webview.mute_oneliner')
+    can_post = user.is_superuser or not user.has_perm ('webview.mute_oneliner')
+
     if message and can_post:
-        models.Oneliner.objects.create(user = user, message = message)
-        f = get_oneliner(True)
-        models.add_event(event='oneliner')
+        models.Oneliner.objects.create (user = user, message = message)
+        f = get_oneliner (True)
+        models.add_event (event = 'oneliner')
 
 def get_event_key(key):
     event = get_latest_event()

@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
+
 from django.db import models
 from django.contrib.auth.models import User
 import datetime
 
+import sys
 import re
 import os.path
 from django.utils import simplejson
 from django.conf import settings
 from django.core.mail import EmailMessage
-#from django.core.urlresolvers import reverse
 import dscan
 import logging
 import xml.dom.minidom, urllib # Needed for XML processing
@@ -73,6 +74,7 @@ def get_now_playing_song(create_new=False):
         cache.set("nowplaysong", queueobj, 300)
     return queueobj
 
+
 def download_limit_reached(user):
     limits = get_cherokee_limit(user)
     if limits:
@@ -80,6 +82,7 @@ def download_limit_reached(user):
         k = cache.get(key, 0)
         if k > limits.get("number"):
             return True
+
 
 def get_cherokee_limit(user):
     r = {}
@@ -100,6 +103,7 @@ def get_cherokee_limit(user):
         r['seconds'] = L.get("seconds", 60*60*24)
         r['number'] = L.get("number", 0)
     return r
+
 
 def secure_download (url, user=None):
     if CHEROKEE_SECRET:
@@ -126,6 +130,7 @@ def secure_download (url, user=None):
         #return mu
     return url
 
+
 if getattr(settings, "LOOKUP_COUNTRY", True):
     from demovibes.ip2cc import ip2cc
     ipdb = os.path.join(settings.SITE_ROOT, "ipcountry.db")
@@ -137,34 +142,27 @@ if getattr(settings, "LOOKUP_COUNTRY", True):
 else:
     ipccdb = False
 
-uwsgi_event_server = getattr(settings, 'UWSGI_EVENT_SERVER', False)
-nodejs_event_server = getattr(settings, 'NODEJS_EVENT_SERVER', False)
 
-if uwsgi_event_server:
+uwsgi_event_server = getattr (settings, 'UWSGI_EVENT_SERVER', False)
+try:
+    # This one if preferred from uwsgi container
+    import uwsgi
+except:
+    # Otherwise (from sockulf) we use this!
+    import pickle
+    uwsgi_event_server = "HTTP"
     uwsgi_event_server_http = getattr(settings, 'UWSGI_EVENT_SERVER_HTTP', False)
-    try:
-        import uwsgi
-    except:
-        import pickle
-        uwsgi_event_server = "HTTP"
 
-if nodejs_event_server:
-    import pika
-
-    connection = pika.AsyncoreConnection(pika.ConnectionParameters(
-        host='localhost'))
-    channel = connection.channel()
-
-    channel.exchange_declare(exchange='events',
-                     type='fanout')
 
 def send_notification(message, user, category = 0):
     d = {
         "message": message,
         "category": category,
     }
+
     data = simplejson.dumps(d)
-    add_event("msg:%s" % data, user)
+    add_event ("msg:%s" % data, user)
+
 
 def add_event(event = None, user = None, eventlist = [], metadata = {}):
     """
@@ -179,53 +177,49 @@ def add_event(event = None, user = None, eventlist = [], metadata = {}):
     Either event or eventlist must be supplied
     """
 
-    cache.delete("curr_event")
+    cache.delete ("curr_event")
 
     if not event and not eventlist:
         return False
 
     if event:
-        eventlist=[event]
+        eventlist = [event]
 
     for event in eventlist:
-        ae = AjaxEvent.objects.create(event = event, user = user)
+        new_ajax_event = AjaxEvent.objects.create (event = event, user = user)
 
-    if nodejs_event_server:
-        for x in eventlist:
-            e = {
-                'event': x,
-                'user': user and user.id or None,
-                'metadata': metadata,
-            }
-            e = simplejson.dumps(e)
-            channel.basic_publish(exchange='events',
-                      routing_key='',
-                      body=e)
+    ajax_events = AjaxEvent.objects.order_by('-id')[:20] # Should have time based limit here..
+    ajax_events = [(x.id, x.event, x.user and x.user.id or "N") for x in ajax_events]
+    data = (ajax_events, new_ajax_event.id)
 
-    if uwsgi_event_server:
-        R = AjaxEvent.objects.order_by('-id')[:20] #Should have time based limit here..
-        R = [(x.id, x.event, x.user and x.user.id or "N") for x in R]
-        data = (R, ae.id)
-        if uwsgi_event_server:
-            if uwsgi_event_server == "HTTP":
-                data = {'data': pickle.dumps(data)}
-                data = urllib.urlencode(data)
-                logging.debug("Event data via http: %s" % data)
-                url = uwsgi_event_server_http or "http://127.0.0.1/demovibes/ajax/monitor/new/"
-                try:
-                    r = urllib.urlopen(url, data)
-                except:
-                    return False
-                return r.read()
-            else:
-                uwsgi.send_uwsgi_message(uwsgi_event_server[0], uwsgi_event_server[1], 33, 17, data, 30)
+    # Only import it when we need to send a message
+    if uwsgi_event_server == "HTTP":
+        data = {'data' : pickle.dumps (data)}
+        data = urllib.urlencode (data)
+        logging.debug ("Event data via http: %s" % data)
+        url = uwsgi_event_server_http or "http://127.0.0.1/demovibes/ajax/monitor/new/"
+        try:
+            r = urllib.urlopen (url, data)
+        except:
+            print "Error! Error! Unable to send message to event server: " + str(sys.exc_info()[1])
+            return False
+
+        return r.read()
+    else:
+        # send_message (host, port, modifier1, modifier2, data, timeout)
+        # 33 means "marshalled messages""
+        uwsgi.send_uwsgi_message (uwsgi_event_server[0], uwsgi_event_server[1], 33, 17, data, 30)
+
 
 from managers import LockingManager, ActiveSongManager
+
 
 # Create your models here.
 
 #Used for artist / song listing
-alphalist = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '-']
+alphalist = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+             'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+
 
 class Group(models.Model):
     STATUS_CHOICES = (
@@ -286,6 +280,7 @@ class Group(models.Model):
     def get_absolute_url(self):
         return ('dv-group', [str(self.id)])
 
+
 class GenericBaseLink(models.Model):
     name = models.CharField(max_length = 20)
     link = models.CharField(max_length = 200, help_text="%linkval% for Link Value")
@@ -305,11 +300,13 @@ class GenericBaseLink(models.Model):
     def __unicode__(self):
         return u"%s link for %s" % (self.name, self.get_linktype_display())
 
+
 LINKSTATUS = (
-    (0,"Active"),
-    (1,"Uploaded"),
-    (2,"Disabled"),
+    (0, "Active"),
+    (1, "Uploaded"),
+    (2, "Disabled"),
 )
+
 
 class GenericLink(models.Model):
     content_type = models.ForeignKey(ContentType)
@@ -337,6 +334,7 @@ class GenericLink(models.Model):
         """
         return self.link.link.replace("%linkval%", self.value)
 
+
 class GroupVote(models.Model):
     """
     Same voting methods for thumbs up rating, only for groups. AAK
@@ -345,6 +343,7 @@ class GroupVote(models.Model):
     vote = models.IntegerField(default=0)
     user = models.ForeignKey(User)
     added = models.DateTimeField(auto_now_add=True)
+
 
 class Theme(models.Model):
     title = models.CharField(max_length = 20)
@@ -389,11 +388,14 @@ class Theme(models.Model):
     def get_absolute_url(self):
         return ('dv-themeinfo', [str(self.id)])
 
+
 def saveTheme(sender, **kwargs):
     instance = kwargs.get("instance")
     if instance.default:
         Theme.objects.all().update(default=False)
-pre_save.connect(saveTheme, sender=Theme)
+
+pre_save.connect (saveTheme, sender = Theme)
+
 
 class Userprofile(models.Model):
     VISIBLE_TO = (
@@ -563,6 +565,7 @@ class Userprofile(models.Model):
     def get_absolute_url(self):
         return ('dv-profile', [self.user.name])
 
+
 # Label/Producer - Depending on the content being served, this could be a number of things. If serving
 #   Real music, this would be the music label such as EMI Records, etc. If this is for game/computer music
 #   It can be used as a Publisher/Producer, such as Ocean Software, Gremlin Graphics etc.
@@ -627,7 +630,8 @@ class Label(models.Model):
     def get_absolute_url(self):
         return ('dv-label', [str(self.id)])
 
-class Artist(models.Model):
+
+class Artist (models.Model):
     STATUS_CHOICES = (
             ('A', 'Active'),
             ('I', 'Inactive'),
@@ -697,13 +701,15 @@ class Artist(models.Model):
     def get_absolute_url(self):
         return ( 'dv-artist', [str(self.id)])
 
-class ArtistVote(models.Model):
+
+class ArtistVote (models.Model):
     """
     Quick idea I had for an artist rating system. Rather than existing vote methods, it will allow
     Users to give a 'Thumbs Up' to any artist. A value of 0 represents no vote, 1 represents a thumbs
     Up, 2 represents 'OK' and 3 represents a thumbs down. any other number is disqualified. It's
     Kind of like the ratings on poeut a bit too hehe. AAK
     """
+
     artist = models.ForeignKey(Artist)
     VOTE_CHOICES = (
             ('U', 'Thumbs Up'),
@@ -715,7 +721,8 @@ class ArtistVote(models.Model):
     user = models.ForeignKey(User)
     added = models.DateTimeField(auto_now_add=True)
 
-class SongType(models.Model):
+
+class SongType (models.Model):
     title = models.CharField(max_length=64, unique = True)
     description = models.TextField()
     symbol = models.ImageField(upload_to = 'media/songsource/symbol', blank = True, null = True)
@@ -736,7 +743,8 @@ class SongType(models.Model):
     def get_absolute_url(self):
         return ("dv-source", [str(self.id)])
 
-class SongPlatform(models.Model):
+
+class SongPlatform (models.Model):
     title = models.CharField(max_length=64, unique = True)
     description = models.TextField()
     symbol = models.ImageField(upload_to = 'media/platform/symbol', blank = True, null = True)
@@ -756,6 +764,7 @@ class SongPlatform(models.Model):
     def get_absolute_url(self):
         return ("dv-platform", [str(self.id)])
 
+
 class Logo(models.Model):
     file = models.FileField(upload_to = 'media/logos')
     active = models.BooleanField(default=True, db_index=True)
@@ -767,6 +776,7 @@ class Logo(models.Model):
 
     def get_absolute_url(self):
         return self.file.url
+
 
 class Screenshot(models.Model):
     STATUS_CHOICES = (
@@ -847,6 +857,7 @@ class Screenshot(models.Model):
     def get_absolute_url(self):
         return ('dv-screenshot', [str(self.id)])
 
+
 class ScreenshotObjectLink(models.Model):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
@@ -857,6 +868,7 @@ class ScreenshotObjectLink(models.Model):
 
     class Meta:
         unique_together = ["content_type", "object_id", "image"]
+
 
 class SongMetaData(models.Model):
     user = models.ForeignKey(User, blank = True, null = True)
@@ -918,6 +930,7 @@ class SongMetaData(models.Model):
         self.song.reset_pouetinfo()
         self.song.save() #For cache updates
 
+
 class ObjectLog(models.Model):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
@@ -934,17 +947,18 @@ class ObjectLog(models.Model):
     def display(self):
         return unicode(self.obj)
 
-def createSongPath(instance, filename):
-    lowfile = filename.lower()
+
+def createSongPath (instance, filename):
+    # A lot of filenames start with digits (track number), so it is better to filter out this
+    lowfile = filter (lambda x: x in alphalist, filename.lower ())
+
     base = "media/music"
-    if len(lowfile) > 4:
-        firstchar = lowfile[0]
-        secchar = lowfile[1]
-        if firstchar not in alphalist:
-            firstchar = "-"
-        if secchar not in alphalist:
-            secchar = "-"
+
+    if len (lowfile) > 4:
+        firstchar = lowfile [0]
+        secchar = lowfile [1]
         return "%s/%s/%s/%s" % (base, firstchar, secchar, filename)
+
     return "%s/shortname/%s" % (base, filename)
 
 
@@ -965,6 +979,7 @@ class Song(models.Model):
             ('R', 'Rejected'),
             ('K', 'Kaput') # file doesn't exist or scanner didn't like the song
         )
+
     added = models.DateTimeField(auto_now_add=True)
     bitrate = models.IntegerField(blank = True, null = True)
     explicit = models.BooleanField(default=False, verbose_name = "Explicit Lyrics?", help_text="Place a checkmark in the box to flag this song as having explicit lyrics/content")
@@ -1417,10 +1432,12 @@ class Song(models.Model):
             return vote[0].vote
         return 0
 
+
 try:
     tagging.register(Song)
 except tagging.AlreadyRegistered:
     pass
+
 
 class TagHistory(models.Model):
     song = models.ForeignKey(Song)
@@ -1428,11 +1445,13 @@ class TagHistory(models.Model):
     user = models.ForeignKey(User)
     added = models.DateTimeField(auto_now_add=True)
 
+
 class SongVote(models.Model):
     song = models.ForeignKey(Song)
     vote = models.IntegerField()
     user = models.ForeignKey(User)
     added = models.DateTimeField(auto_now_add=True)
+
 
 class Compilation(models.Model):
     """
@@ -1441,6 +1460,7 @@ class Compilation(models.Model):
     Handy for some musicians to take advantage of, such as Machinae Supremacy or other demoscene
     Artists who want to promote some badass tracks from their upcoming CD. Linkage FTW!!!111   AAK
     """
+
     STATUS_CHOICES = (
             ('A', 'Active'),
             ('I', 'Inactive'),
@@ -1569,6 +1589,7 @@ class Compilation(models.Model):
     def get_absolute_url(self):
         return ('dv-compilation', [str(self.id)])
 
+
 class CompilationSongList(models.Model):
     song = models.ForeignKey("Song")
     compilation = models.ForeignKey("Compilation")
@@ -1576,6 +1597,7 @@ class CompilationSongList(models.Model):
 
     class Meta:
         ordering = ['index']
+
 
 class CompilationVote(models.Model):
     """
@@ -1586,11 +1608,13 @@ class CompilationVote(models.Model):
     user = models.ForeignKey(User)
     added = models.DateTimeField(auto_now_add=True)
 
+
 class SongApprovals(models.Model):
     song = models.ForeignKey(Song)
     approved = models.DateTimeField(auto_now_add=True)
     approved_by = models.ForeignKey(User, related_name="uploadlist_approvedby")
     uploaded_by = models.ForeignKey(User, related_name="uploadlist_uploadedby")
+
 
 class SongDownload(models.Model):
     song = models.ForeignKey(Song)
@@ -1601,6 +1625,7 @@ class SongDownload(models.Model):
 
     class Meta:
         ordering = ['title']
+
 
 class Queue(models.Model):
     eta = models.DateTimeField(blank = True, null = True)
@@ -1688,6 +1713,7 @@ class Queue(models.Model):
         """
         self.eta = self.get_eta()
 
+
 class SongComment(models.Model):
     song = models.ForeignKey(Song)
     user = models.ForeignKey(User)
@@ -1699,6 +1725,7 @@ class SongComment(models.Model):
         return self.comment
     class Meta:
         ordering = ['-added']
+
 
 class Favorite(models.Model):
     song = models.ForeignKey(Song)
@@ -1724,6 +1751,7 @@ class Favorite(models.Model):
         self.song.save()
         return super(Favorite, self).delete()
 
+
 class Oneliner(models.Model):
     message = models.CharField(max_length=256)
     user = models.ForeignKey(User)
@@ -1738,9 +1766,11 @@ class Oneliner(models.Model):
     def save(self, *args, **kwargs):
         return super(Oneliner, self).save(*args, **kwargs)
 
+
 class AjaxEvent(models.Model):
     event = models.CharField(max_length=200)
     user = models.ForeignKey(User, blank = True, null = True, default = None)
+
 
 class News(models.Model):
     text = models.TextField()
@@ -1771,6 +1801,7 @@ class News(models.Model):
         verbose_name_plural = 'News'
         ordering = ['-added']
 
+
 class RadioStream(models.Model):
     url = models.CharField(max_length=120, verbose_name="Direct URL", help_text="Direct URL to stream (no m3u). Shoutcast streams include PLS extension")
     name = models.CharField(max_length=120, verbose_name="Stream Name", help_text="Name of the stream, as you want it to appear on the site")
@@ -1789,6 +1820,7 @@ class RadioStream(models.Model):
 
     def __unicode__(self):
         return "%s (%s)" % (self.name, self.bitrate)
+
 
 class PrivateMessage(models.Model):
     message = models.TextField()
@@ -1843,12 +1875,14 @@ class PrivateMessage(models.Model):
         #Call real save
         return super(PrivateMessage, self).save(*args, **kwargs)
 
+
 class UploadTicket(models.Model):
     ticket = models.CharField(max_length=20)
     user = models.ForeignKey(User)
     added = models.DateTimeField(auto_now_add=True)
     tempfile = models.CharField(max_length=100, blank = True, default = "")
     filename = models.CharField(max_length=100, blank = True, default = "")
+
 
 class CountryList(models.Model):
     name = models.CharField(max_length=60)
@@ -1857,6 +1891,7 @@ class CountryList(models.Model):
 
     class Meta:
         ordering = ['name']
+
 
 class LinkCategory(models.Model):
     name = models.CharField(max_length=60, verbose_name="Category Name", help_text="Display Name of this category, as you want to see it on the links page")  # Visible name of the link category
@@ -1875,6 +1910,7 @@ class LinkCategory(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ('dv-linkcategory', [self.id_slug])
+
 
 class Link(models.Model):
     name = models.CharField(unique = True, max_length=40, verbose_name="Link Name", help_text="Name/Title of the link. Depending on link type, might not be displayed.") # Clickable name of the link
@@ -1922,6 +1958,7 @@ class Link(models.Model):
     def get_absolute_url(self):
         return ('dv-linkcategory', [self.id])
 
+
 class Faq(models.Model):
     active = models.BooleanField(default=True, verbose_name = "Active?", db_index=True)
     added_by = models.ForeignKey(User, blank = True, null = True)
@@ -1946,6 +1983,7 @@ class Faq(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ('dv-faqitem', [self.id])
+
 
 class SongLicense(models.Model):
     name = models.CharField(max_length=50, verbose_name="Name")
@@ -1974,7 +2012,9 @@ def create_profile(sender, **kwargs):
             profile.save()
         except:
             pass
+
 post_save.connect(create_profile, sender=User)
+
 
 def set_song_values(sender, **kwargs):
     song = kwargs["instance"]
@@ -1992,4 +2032,8 @@ def set_song_values(sender, **kwargs):
         if not song.song_length:
             song.status = 'K'
         song.save()
-post_save.connect(set_song_values, sender = Song)
+
+post_save.connect (set_song_values, sender = Song)
+
+
+#  LocalWords:  sockulf uwsgi

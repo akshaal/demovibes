@@ -5,7 +5,6 @@ from demovibes.webview import ajax_views
 
 urlpatterns = patterns('',
     (r'^ping/(?P<event_id>\d+)/$',   'demovibes.webview.ajax_views.ping'),
-    (r'^monitor/(?P<event_id>\d+)/$',   'demovibes.webview.ajax_views.monitor'),
     (r'^license/(?P<id>\d+)/$',   ajax_views.LicenseView()),
     (r'^nowplaying/$',          'demovibes.webview.ajax_views.nowplaying'),
     (r'^queue/$',               'demovibes.webview.ajax_views.queue'),

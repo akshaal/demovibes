@@ -27,20 +27,16 @@ DEFAULT_FLAG = "nectaflag"
 # URL to use for Flash streaming.
 #FLASH_STREAM_URL = "http://server:port/stream"
 
-#To make this work you need:
-#  1. uWSGI
-#  2. start the uwsgi_eventhandler module
-#  3. Point /demovibes/ajax/monitor/* urls to it
 #UWSGI_EVENT_SERVER = ("127.0.0.1", 3032)
+
+#If you have vserver that need a specific url, use this:
+#UWSGI_EVENT_SERVER_HTTP = "http://<hostname>/demovibes/ajax/monitor/new/"
+# Remember to also add ip to allowed_ips in uwsgi_eventhandler/local_settings.py
 
 # To protect private notices from prying eyes, type a random secret here.
 #UWSGI_ID_SECRET = ""
 # Note that the same setting will have to be in local_config.py for
 # uwsgi_eventhandler for it to work.
-#
-#If you have vserver that need a specific url, use this:
-#UWSGI_EVENT_SERVER_HTTP = "http://<hostname>/demovibes/ajax/monitor/new/"
-# Remember to also add ip to allowed_ips in uwsgi_eventhandler/local_settings.py
 
 #from django.conf import global_settings
 #FILE_UPLOAD_HANDLERS = ('webview.uploadprogress.UploadProgressCachedHandler', ) + \
