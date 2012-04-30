@@ -1,3 +1,4 @@
+whoosh_index
 *.pyc
 settings_local.py
 local_config.py
