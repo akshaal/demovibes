@@ -5,6 +5,22 @@ DIR=`dirname "$0"`
 # Grabs all files in music/, tries to get artist and song name from filename, and imports.
 # Expects music/Source - blahblahblah/Artist/Album/Songname.mp3
 
+# To separate from previous run in logs
+echo
+echo
+echo
+echo "=================================================================================="
+
+prg="dry_run"
+if test "$1" = "--run"; then
+    prg="$DIR/pyImportMp3.py"
+fi
+
+dry_run () {
+    echo "Doing dry run with arguments:" "$@"
+    return 5
+}
+
 for x in music/*/*/*/*.mp3; do
     source=$(echo "$x" | cut -d '/' -f2 | cut -d- -f1)
     artist=$(echo "$x" | cut -d '/' -f3 | sed 's/_/ /g')
@@ -14,6 +30,8 @@ for x in music/*/*/*/*.mp3; do
     # Remove track number from title
     if echo "$title" | grep -q -P '^[0-9]+\s*-'; then
         title=`echo "$title" | cut -d- -f2-`
+    elif echo "$title" | grep -q -P '^[0-9]+\s*\.'; then
+        title=`echo "$title" | cut -d. -f2-`
     fi
 
     # Import
@@ -44,7 +62,7 @@ for x in music/*/*/*/*.mp3; do
                 fi
 
                 # Run
-                if $DIR/pyImportMp3.py -f "$x" -s $source -a "$artist" -t "$title" "${(s: :)args}" -C; then
+                if "$prg" -f "$x" -s $source -a "$artist" -t "$title" "${(s: :)args}" -C; then
                     echo "Success"
 
                     if test ! -z "$MUSIC_DEST"; then

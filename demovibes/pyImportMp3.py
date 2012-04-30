@@ -73,7 +73,7 @@ for opt, arg in opts:
     elif opt == '-s':
         source = int(arg.strip())
     elif opt == '-t':
-        title = arg.strip().capitalize()
+        title = arg.strip()
     elif opt == '-a':
         artists.append(arg.strip())
     elif opt == '-C':
