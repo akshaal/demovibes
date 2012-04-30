@@ -97,7 +97,12 @@ if source:
 
 if tags:
     # Make sure we don't create tags with typos and so on. Only existing tags are allowed'
-    tag_objs = map (lambda t : Tag.objects.get (name = t), tags)
+    for tag in tags:
+        try:
+            Tag.objects.get (name = tag)
+        except:
+            print "Tag doesn't exist: " + tag
+            sys.exit (99)
 
 # Get artists
 A = []

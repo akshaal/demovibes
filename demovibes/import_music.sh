@@ -37,6 +37,8 @@ for x in music/*/*/*/*.mp3; do
     # Import
     echo "\n- File: $x\n    Artist: $artist\n    Album: $album\n    Title: $title\n    Source ID: $source"
     while true; do
+        SDIR=`dirname "$x"`
+
         yn="y"
         case $yn in
             [Yy]* )
@@ -53,12 +55,19 @@ for x in music/*/*/*/*.mp3; do
                 fi
 
                 # Check for tags info
-                SDIR=`dirname "$x"`
                 tags_file="$SDIR/tags"
                 if test -e "$tags_file"; then
                     tags=`cat "$tags_file"`
                     echo "    Tags: $tags"
                     args="$args -T $tags"
+                fi
+
+                # What about year?
+                year_file="$SDIR/year"
+                if test -e "$year_file"; then
+                    year=`cat "$year_file"`
+                    echo "    Year: $year"
+                    args="$args -y $year"
                 fi
 
                 # Run
