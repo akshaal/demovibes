@@ -16,6 +16,15 @@ function updateinput() {
 }
 
 
+function showhide_addall () {
+    if ($("#sortsongsearchlist").sortable("toArray").length > 0) {
+        $("#addall").show ();
+    } else {
+        $("#addall").hide ();
+    }
+}
+
+
 function hms(secs) {
     secs = secs % 86400;
     var time = [0, 0, secs];
@@ -45,6 +54,7 @@ function addsongs(target, data) {
             li.slideUp(170, function () {
                 li.remove();
                 updateinput();
+                showhide_addall ();
             });
         });
 
@@ -63,9 +73,25 @@ function addsongs(target, data) {
 
 
 $(document).ready(function () {
+    $("#addall").click(function () {
+        var sortsonglist = $("#sortsonglist");
+
+        $.each($("#sortsongsearchlist").sortable("toArray"),
+               function (i, val) {
+                   var item = $("#" + val);
+                   sortsonglist.append (item);
+               });
+
+        updateinput();
+        showhide_addall ();
+    });
+
     $("#sortsongsearchlist").sortable({
         "connectWith": "#sortsonglist",
-        "containment": "#dragarea"
+        "containment": "#dragarea",
+        "update": function (event, ui) {
+            showhide_addall ();
+        }
     });
 
     $("#sortsonglist").sortable({
@@ -84,6 +110,7 @@ $(document).ready(function () {
                 $("#errr").text(data.error).stop(true, true).show().fadeOut(3000);
             } else {
                 addsongs($("#sortsongsearchlist"), data);
+                showhide_addall ();
             }
         });
         return false;
@@ -109,5 +136,5 @@ $(document).ready(function () {
 
 //  LocalWords:  songinfo sortsonglist toArray songlength songsinput
 //  LocalWords:  timelength li songlirm songli href connectWith errr
-//  LocalWords:  sortsongsearchlist dragarea addsongform
+//  LocalWords:  sortsongsearchlist dragarea addsongform addall
 //  LocalWords:  compilationsubmitform
