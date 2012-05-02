@@ -14,7 +14,7 @@
 {% endfor %}
 <br />
 
-{% if user.is_staff %}<a href="{{ url ("dv-newcomp") }}">{{ gettext("New compilation") }}</a>{% endif %}
+{% include "webview/t/new_compilation_link.html" %}
 
 {{ paging }}
 

@@ -84,6 +84,17 @@ Date Of Death: {{ display.date(object.deceased_date) }}<br />
 </tr>
 </table>
 
+
+<h2><img class="icon_header" src="{{ STATIC_URL }}recplay_ico.png" alt="" />{{ gettext("Compilations Connected To This Artist") }}</h2>
+{% for comp in object.compilation_set.all().order_by('rel_date') %}
+{{ display.compilation(comp) }}<br />
+{% endfor %}
+
+<br />
+
+{% include "webview/t/new_compilation_link.html" %}
+
+
 <h2><img class="icon_header" src="{{ STATIC_URL }}music.png" alt="" />{{ gettext("Songs Connected To This Artist") }}</h2>
 {% include "webview/t/songheader.html" %}
 
