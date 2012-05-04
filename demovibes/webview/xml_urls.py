@@ -1,11 +1,18 @@
 from django.conf.urls.defaults import *
 from demovibes.webview.xml_views import *
 from django.views.generic.list_detail import object_detail, object_list
+from tagging.models import Tag
 
 song_dict = {
     'queryset': Song.objects.all(),
     'mimetype': "application/xml",
     'template_name': 'webview/xml/song.xml',
+}
+
+tag_dict = {
+    'queryset': Tag.objects.all(),
+    'mimetype': "application/xml",
+    'template_name': 'webview/xml/tags.xml',
 }
 
 stream_dict = {
@@ -53,6 +60,7 @@ urlpatterns = patterns('',
     (r'^group/(?P<object_id>\d+)/$', cached_object_detail , group_dict),
     (r'^artist/(?P<object_id>\d+)/$', cached_object_detail, artist_dict),
     (r'^streams/$',                 cached_object_list, stream_dict),
+    (r'^tags/$',                 cached_object_list, tag_dict),
     #(r'^artist/$',     'demovibes.webview.xml_views.artist'),
     (r'^user/(?P<username>\w+)/$', UserInfo()),
     (r'^user/(?P<username>\w+)/favorites/$', UserFavorites()),
