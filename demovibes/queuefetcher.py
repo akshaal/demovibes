@@ -13,14 +13,8 @@ from django.contrib.sites.models import Site
 from webview import common
 
 class song_finder(object):
-    songweight = {
-        'N' : 1,
-        1 : 40,
-        2 : 25,
-        3 : 10,
-        4 : 3,
-        5 : 1,
-    }
+    songweight = getattr (settings, 'SONG_WEIGHT', {'N' : 1,  1 : 40,  2 : 25,  3 : 10,  4 : 3,  5 : 1})
+    min_votes = getattr (settings, 'DJ_RANDOM_MIN_VOTES', 5)
 
     def __init__(self, djuser = None):
         self.sysenc = sys.getdefaultencoding()
@@ -153,7 +147,7 @@ class song_finder(object):
         if song.is_locked() :
             return False
 
-        if song.rating_votes < 5: # Not voted or few votes
+        if song.rating_votes < self.min_votes: # Not voted or few votes
             C = 'N'
         else:
             C = int(round(song.rating))

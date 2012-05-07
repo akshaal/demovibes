@@ -299,6 +299,16 @@ SONG_LOCK_TIME = { 'days' : 0, 'hours' : 0, 'minutes' : 5 }
 # Will play one every 30 minutes or 10 songs, but not more often than every 20 minutes.
 PLAY_JINGLES = False
 
+#SONG_WEIGHT = {
+# 'N' : 18,
+# 1 : 50,
+# 2 : 30,
+# 3 : 7,
+# 4 : 3,
+#    5 : 1}
+
+#DJ_RANDOM_MIN_VOTES = 1
+
 # How many objects per page:
 PAGINATE = 30
 FORUM_PAGINATE = 15
