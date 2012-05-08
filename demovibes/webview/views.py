@@ -793,7 +793,7 @@ def view_songinfo(request, songinfo_id):
     meta = get_object_or_404(m.SongMetaData, id=songinfo_id)
     if request.method == "POST":
         if request.POST.has_key("activate") and request.POST["activate"]:
-            if not meta.checked:
+            if not meta.checked and meta.user:
                 meta.user.get_profile().send_message(
                     subject="Song info approved",
                     message="Your metadata for song [song]%s[/song] is now active :)"  % meta.song.id,
@@ -802,7 +802,7 @@ def view_songinfo(request, songinfo_id):
             meta.song.log(request.user, "Approved song metadata")
             meta.set_active()
         if request.POST.has_key("deactivate") and request.POST["deactivate"]:
-            if not meta.checked:
+            if not meta.checked and meta.user:
                 meta.user.get_profile().send_message(
                     subject="Song info not approved",
                     message="Your metadata for song [song]%s[/song] was not approved :(" % meta.song.id,

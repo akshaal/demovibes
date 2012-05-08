@@ -1089,7 +1089,20 @@ class Song(models.Model):
         ordering = ['title']
 
     def get_metadata(self):
-        return self.songmetadata_set.all()[0]
+        all = self.songmetadata_set.all()
+
+        if len(all):
+            return all[0]
+        else:
+            logging.error("Problem with songmetadata... it's missing! song id=" + str (self.id) + " Kaput!")
+
+            m = SongMetaData (song = self)
+            m.save ()
+
+            self.status = "K"
+            self.save ()
+
+            return m
 
     @models.permalink
     def get_absolute_url(self):
