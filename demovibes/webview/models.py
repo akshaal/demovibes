@@ -1088,21 +1088,26 @@ class Song(models.Model):
     class Meta:
         ordering = ['title']
 
-    def get_metadata(self):
+    def get_metadata_or_none (self):
         all = self.songmetadata_set.all()
 
-        if len(all):
+        if len (all):
             return all[0]
         else:
-            logging.error("Problem with songmetadata... it's missing! song id=" + str (self.id) + " Kaput!")
+            return None
 
-            m = SongMetaData (song = self)
+    def get_metadata (self):
+        m = self.get_metadata_or_none ()
+
+        if m == None:
+            logging.error("Problem with songmetadata... it's missing! song id=" + str (self.id) + " Kaput!")
+            m = SongMetaData (song = self) # TODO: Use DJRandom as a user?!
             m.save ()
 
             self.status = "K"
             self.save ()
 
-            return m
+        return m
 
     @models.permalink
     def get_absolute_url(self):
@@ -2030,12 +2035,14 @@ post_save.connect(create_profile, sender=User)
 
 
 def set_song_values(sender, **kwargs):
+    # WTF?!
+
     song = kwargs["instance"]
     try:
-        song.add_pouet_img_as_screenshot()
+        if song.get_metadata_or_none () != None:
+            song.add_pouet_img_as_screenshot()
     except:
-        pass
-
+        logging.error ("Unable to add puoet img: " + str(sys.exc_info()))
 
     if (not song.song_length) and song.status != 'K' and os.path.isfile(song.file.path):
         try:

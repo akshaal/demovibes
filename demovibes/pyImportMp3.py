@@ -124,10 +124,6 @@ for artist in artists:
 song = Song (title = title, file = "media/" + music, status = status, uploader = user)
 song.save()
 
-song.set_song_data ()
-song.save()
-
-# Song metadata
 songinfo = SongMetaData (user = user,
                          song = song,
                          checked = True,
@@ -135,6 +131,8 @@ songinfo = SongMetaData (user = user,
                          release_year = year,
                          type = source)
 songinfo.save()
+
+# Song metadata
 
 for artist in A:
     songinfo.artists.add (artist)
