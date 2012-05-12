@@ -287,7 +287,7 @@ def current_song(user = None):
         if Q.song.get_metadata().ytvidid and user.get_profile().show_youtube:
           ytinfo = js.r2s("webview/t/now_playing_youtube.html", c)
           now = now + ytinfo
-        elif Q.song.get_screenshots() and user.get_profile().show_screenshots:
+        elif Q.song.get_screenshots_or_covers() and user.get_profile().show_screenshots:
             scinfo = js.r2s("webview/t/now_playing_screenshot.html", c)
             now = now + scinfo
         else:

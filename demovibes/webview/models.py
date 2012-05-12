@@ -840,10 +840,10 @@ class Screenshot(models.Model):
         format = getattr(settings, 'SCREEN_SCALE_FORMAT', 'jpeg')
 
         res = cStringIO.StringIO()
-        size=(thumbwidth, thumbheight)
+        size = (thumbwidth, thumbheight)
 
         img = Image.open(self.image.path)
-        img.thumbnail(size, Image.ANTIALIAS)
+        img.thumbnail (size, Image.ANTIALIAS)
 
         if img.mode != "RGB":
             img = img.convert("RGB")
@@ -851,7 +851,8 @@ class Screenshot(models.Model):
         img.save(res, format, quality=quality) # Dump the scaled image to a buffer
         res.seek(0) # Move pointer back to the beginning of the buffer
         thumb = SimpleUploadedFile(os.path.basename(self.image.path), res.read()) # Save it somewhere on the disk
-        self.thumbnail.save(os.path.basename(self.image.path), thumb, save=True) # Save it in the model
+
+        self.thumbnail.save (os.path.basename(self.image.path), thumb, save=True) # Save it in the model
 
     @models.permalink
     def get_absolute_url(self):
@@ -1065,24 +1066,45 @@ class Song(models.Model):
         """
         Return all active download links
         """
+
         return self.songdownload_set.filter(status=0)
 
-    def get_screenshots(self):
+    def get_screenshots (self):
         """
-        Return all active download links
+        Return all active screenshots
         """
+
         return self.screenshots.filter(image__status='A').order_by("-is_main")
+
+    def get_screenshots_or_covers (self):
+        """
+        Return all active screenshots or random master screenshots of compilations.
+        """
+
+        shots = self.get_screenshots ()
+        if shots:
+            return shots
+
+        shots = []
+        for comp in Compilation.objects.filter (songs__id = self.id, status = 'A').all():
+            shot = comp.get_master_screenshot ()
+            if shot:
+                shots.append (shot)
+
+        return shots [random.randint (0, len(shots) - 1)]
 
     def get_active_links(self):
         """
         Return all active generic links
         """
+
         return self.links.filter(status=0)
 
     def is_active(self):
         """
         Check if song is considered active.
         """
+
         return self.status == "A" or self.status == "N"
 
     class Meta:

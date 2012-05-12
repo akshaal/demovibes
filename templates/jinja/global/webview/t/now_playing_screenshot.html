@@ -1,5 +1,5 @@
 {% import "macro/display.html" as display -%}
-{% set su = song.get_screenshots()|random %}
+{% set su = song.get_screenshots_or_covers()|random %}
 {% set ss = su.image %}
 {% if now_playing.song %}
 <div id="screenshotview">
