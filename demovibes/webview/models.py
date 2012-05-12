@@ -1081,15 +1081,18 @@ class Song(models.Model):
         Return all active screenshots or random master screenshots of compilations.
         """
 
-        shots = self.get_screenshots ()
-        if shots:
-            return shots
+        myshots = self.get_screenshots ()
+        if myshots:
+            return myshots
 
         shots = []
         for comp in Compilation.objects.filter (songs__id = self.id, status = 'A').all():
             shot = comp.get_master_screenshot ()
             if shot:
                 shots.append (shot)
+
+        if not shots:
+            return myshots
 
         return shots [random.randint (0, len(shots) - 1)]
 
