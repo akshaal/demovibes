@@ -253,10 +253,6 @@ def current_song(user = None):
 
     if user:
         Q = common.get_now_playing_song()
-        try:
-            screenshot = SongMetaData.objects.filter(song = Q.song, active=True)
-        except:
-            screenshot = None
 
         if not Q:
             return ""
