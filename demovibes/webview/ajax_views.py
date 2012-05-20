@@ -36,7 +36,16 @@ class AjaxView(MyBaseView):
 @cache_page (60*60*24)
 @cache_control (max_age = 3600*24)
 def smileys (request):
-    s = simplejson.dumps (settings.SMILEYS)
+    filtered = []
+    seen = set ()
+    for name, path in settings.SMILEYS:
+        if path in seen:
+            continue
+
+        seen.add (path)
+        filtered.append ((name, path))
+
+    s = simplejson.dumps (filtered)
     return HttpResponse (s, "application/json")
 
 
