@@ -1,5 +1,6 @@
 from webview import models
 from webview.models import get_now_playing_song
+from webview.decorators import atomic
 from django.conf import settings
 from django.core.cache import cache
 from django.conf import settings
@@ -15,35 +16,11 @@ import logging
 import socket
 import datetime
 import j2shim
-import time
 
 MIN_QUEUE_SONGS_LIMIT = getattr(settings, "MIN_QUEUE_SONGS_LIMIT", 0)
 QUEUE_TIME_LIMIT = getattr(settings, "QUEUE_TIME_LIMIT", False)
 SELFQUEUE_DISABLED = getattr(settings, "SONG_SELFQUEUE_DISABLED", False)
 LOWRATE = getattr(settings, 'SONGS_IN_QUEUE_LOWRATING', False)
-
-def atomic(key, timeout=30, wait=60):
-    """
-    Lock a function so it can not be run in parallell
-
-    Key value identifies function to lock
-    """
-    lockkey = "lock-" + key
-    def func1(func):
-        def func2(*args, **kwargs):
-            c = 0
-            has_lock = cache.add(lockkey, 1, timeout)
-            while not has_lock and c < wait * 10:
-                c = c + 1
-                time.sleep(0.1)
-                has_lock = cache.add(lockkey, 1, timeout)
-            if has_lock:
-                try:
-                    return func(*args, **kwargs)
-                finally:
-                    cache.delete(lockkey)
-        return func2
-    return func1
 
 def ratelimit(limit=10,length=86400):
     """

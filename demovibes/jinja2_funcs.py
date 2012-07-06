@@ -56,6 +56,7 @@ def mksafe(arg):
 FILTERS = {
     'time': defaultfilters.time,
     'date': defaultfilters.date,
+    'escapejs': defaultfilters.escapejs,
     'pluralize': defaultfilters.pluralize,
     'timesince': timesince,
     'timeuntil': timeuntil,

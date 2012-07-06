@@ -1,10 +1,61 @@
 from webview import models as M
 from django import forms
 from django.conf import settings
+from django.utils.translation import ugettext as _
 from PIL import Image
-#import mimetypes
 import dscan
 import logging
+
+
+DJRANDOM_MOOD_CHOICES = (
+    (M.DJRandomOptions.MOOD_LEAST_VOTES, _("Vote NAO or die!!!!1")),
+    (M.DJRandomOptions.MOOD_NORMAL, _("I am OK.")),
+    (M.DJRandomOptions.MOOD_BEST, _("Fuck your crap!")))
+
+DJRANDOM_AVOID_EXPLICIT_CHOICES = (
+    (1, _("No fucking explicit content anymore.")),
+    (0, _("Censorship sucks.")))
+
+
+class DJRandomMoodForm (forms.Form):
+    mood = forms.ChoiceField (choices = DJRANDOM_MOOD_CHOICES)
+
+    def get_mood (self):
+        return int (self ['mood'].value ())
+
+    def describe_mood (self):
+        return dict (DJRANDOM_MOOD_CHOICES) [self.get_mood ()]
+
+    def get_mood_html (self, set_by = ""):
+        title = _("Set by") + " " + set_by
+        return '<span title="{0}" mood="{1}">{2}</span>'.format (
+            title,
+            self.get_mood (),
+            self.describe_mood ())
+
+    def get_mood_field_html (self):
+        return self ['mood'].as_widget ()
+
+
+class DJRandomAvoidExplicitForm (forms.Form):
+    avoid_explicit = forms.ChoiceField (choices = DJRANDOM_AVOID_EXPLICIT_CHOICES)
+
+    def get_avoid_explicit (self):
+        return int (self ['avoid_explicit'].value ())
+
+    def describe_avoid_explicit (self):
+        return dict (DJRANDOM_AVOID_EXPLICIT_CHOICES) [self.get_avoid_explicit ()]
+
+    def get_avoid_explicit_html (self, set_by = ""):
+        title = _("Set by") + " " + set_by
+        return '<span title="{0}" avoidexplicit="{1}">{2}</span>'.format (
+            title,
+            self.get_avoid_explicit (),
+            self.describe_avoid_explicit ())
+
+    def get_avoid_explicit_field_html (self):
+        return self ['avoid_explicit'].as_widget ()
+
 
 class UploadForm(forms.ModelForm):
     class Meta:

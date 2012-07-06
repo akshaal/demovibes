@@ -1,6 +1,7 @@
 from webview import models as m
 from webview import forms as f
 from webview import common
+from webview.decorators import atomic
 from django.utils.html import escape
 from openid_provider.models import TrustedRoot
 
@@ -296,17 +297,33 @@ def chat(request):
     return j2shim.r2r('webview/chat.html', { }, request)
 
 
-class listQueue(WebView):
+class ListQueue(WebView):
     """
     Display the current song, the next songs in queue, and the latest 20 songs in history.
+    Also provides a way to view DJRandom mood.
     """
+
     template = "queue_list.html"
 
     def set_context(self):
-        return {
-                'now_playing': "",
-                'history': common.get_history(),
-                'queue': common.get_queue(),
+        # DJRandom status - - - - - - -  --
+        djrandom_options = m.DJRandomOptions.snapshot ()
+        mood = djrandom_options.mood
+        avoid_explicit = djrandom_options.avoid_explicit
+
+        mood_form = f.DJRandomMoodForm (initial = {'mood' : mood})
+        mood_html = mood_form.get_mood_html (set_by = mood.comment)
+
+        ae_form = f.DJRandomAvoidExplicitForm (initial = {'avoid_explicit' : avoid_explicit})
+        ae_html = ae_form.get_avoid_explicit_html (set_by = avoid_explicit.comment)
+
+        return {'djrandom_mood_html'                    : mood_html,
+                'djrandom_mood_field_html'              : mood_form.get_mood_field_html (),
+                'djrandom_avoid_explicit_html'          : ae_html,
+                'djrandom_avoid_explicit_field_html'    : ae_form.get_avoid_explicit_field_html (),
+                'now_playing'                           : "",
+                'history'                               : common.get_history(),
+                'queue'                                 : common.get_queue(),
         }
 
 def list_song(request, song_id):
@@ -652,7 +669,7 @@ class ChangeFavorite(AjaxifyView):
 class VoteSong(AjaxifyView):
     redirect_to = "dv-root"
 
-    @common.atomic("vote")
+    @atomic("vote")
     def handle_form(self, form):
         self.int_vote = int(form.get("vote", form.get("ajaxvote")))
         if self.int_vote <= 5 and self.int_vote > 0:
@@ -1005,7 +1022,7 @@ def showRecentChanges(request):
       'labels' : labellist, 'compilations' : complist}, request=request)
 
 
-class songStatistics(WebView):
+class RadioStatus(WebView):
     template = "stat_songs.html"
 
     def list_favorites(self):
@@ -1047,22 +1064,56 @@ class songStatistics(WebView):
 
     def initialize(self):
         self.stats = {
-            'random': ("Random songs from the database!", "rating_votes", "# Votes", self.list_random),
-            'leastvotes': ("Songs with the least number of votes in the database.", "rating_votes", "# Votes", self.list_leastvotes),
-            'favorites': ("Songs which appear on more users favourites lists.", "num_favorited", "# Favorited", self.list_favorites),
-            'voted': ("Songs with the highest ratings in the database.", "rating", "Rating", self.list_voted),
-            'queued': ("The most played songs in the database.", "times_played", "# Played", self.list_queued),
-            'unplayed': ("The least played songs in the database.", "times_played", "# Played", self.list_queued2),
-            'mostvotes': ("Songs with the highest number of votes cast.", "rating_votes", "# Votes", self.list_mostvotes),
+            'random': ("Random songs from the database!",
+                       "rating_votes",
+                       "# Votes",
+                       self.list_random),
+
+            'leastvotes': ("Songs with the least number of votes in the database.",
+                           "rating_votes",
+                           "# Votes",
+                           self.list_leastvotes),
+
+            'favorites': ("Songs which appear on more users favourites lists.",
+                          "num_favorited",
+                          "# Favorited",
+                          self.list_favorites),
+
+            'voted': ("Songs with the highest ratings in the database.",
+                      "rating",
+                      "Rating",
+                      self.list_voted),
+
+            'queued': ("The most played songs in the database.",
+                       "times_played",
+                       "# Played",
+                       self.list_queued),
+
+            'unplayed': ("The least played songs in the database.",
+                         "times_played",
+                         "# Played",
+                         self.list_queued2),
+
+            'mostvotes': ("Songs with the highest number of votes cast.",
+                          "rating_votes",
+                          "# Votes",
+                          self.list_mostvotes),
         }
+
         self.stattype = self.kwargs.get("stattype", "")
 
     def set_context(self):
         if self.stattype in self.stats.keys():
             title, stat, name, songs = self.stats[self.stattype]
-            return {'songs': songs()[:100], 'title': title, 'numsongs': 100, 'stat': stat, 'name': name}
-        self.template = "stat_songs_index.html"
-        return {'keys': self.stats}
+            return {'songs': songs()[:100],
+                    'title': title,
+                    'numsongs': 100,
+                    'stat': stat,
+                    'name': name}
+
+        self.template = "radio_status.html"
+        return {'keys' : self.stats}
+
 
 class tagCloud(WebView):
     template = "tag_cloud.html"

@@ -7,13 +7,25 @@ import logging, logging.config
 from django.core.management import setup_environ
 import settings
 setup_environ(settings)
-from webview.models import Queue, Song
+from webview.models import Queue, Song, DJRandomOptions
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from webview import common
 
 class song_finder(object):
-    songweight = getattr (settings, 'SONG_WEIGHT', {'N' : 1,  1 : 40,  2 : 25,  3 : 10,  4 : 3,  5 : 1})
+    songweight = getattr (settings, 'SONG_WEIGHT', {'N' : 1,
+                                                    1   : 40,
+                                                    1.5 : 35,
+                                                    2   : 25,
+                                                    2.5 : 20,
+                                                    3   : 10,
+                                                    3.5 : 6,
+                                                    4   : 3,
+                                                    4.5 : 2,
+                                                    5   : 1})
+
+    songweight_best = getattr (settings, 'SONG_WEIGHT_BEST', songweight)
+
     min_votes = getattr (settings, 'DJ_RANDOM_MIN_VOTES', 5)
 
     def __init__(self, djuser = None):
@@ -45,30 +57,43 @@ class song_finder(object):
         self.init_jt()
         self.weight_table = {
             'N' : 0,
-            1 : 0,
-            2 : 0,
-            3 : 0,
-            4 : 0,
-            5 : 0
+            1   : 0,
+            1.5 : 0,
+            2   : 0,
+            2.5 : 0,
+            3   : 0,
+            3.5 : 0,
+            4   : 0,
+            4.5 : 0,
+            5   : 0
         }
 
     def findQueued(self):
         """
         Return next queued song, or a random song, or a jingle.
         """
-        songs = Queue.objects.filter(played=False, playtime__lte = datetime.now()).order_by('-priority', 'id')
-        if not songs: # Since OR queries have been problematic on production server earlier, we do this hack..
-            songs = Queue.objects.filter(played=False, playtime = None).order_by('-priority', 'id')
+
+        queues = Queue.objects.filter (played=False, playtime__lte = datetime.now()).order_by('-priority', 'id')
+
+        if not queues:
+            # Since OR queries have been problematic on production server earlier, we do this hack..
+            queues = Queue.objects.filter (played=False, playtime = None).order_by('-priority', 'id')
+
         if settings.PLAY_JINGLES:
             jingle = self.JingleTime()
             if jingle:
                 return jingle
-        if songs:
-            song = songs[0]
-            common.play_queued(song)
-            return song.song
+
+        if queues:
+            # Something we should take from the queue
+            queue = queues [0]
         else:
-            return self.getRandom()
+            # Nothing in queue, djrandom's turn
+            song = self.getRandomSong ()
+            queue = common.queue_song (song, self.dj_user, False, True)
+
+        common.play_queued (queue)
+        return queue.song
 
     def get_metadata(self):
         return self.meta.encode(self.sysenc, 'replace')
@@ -110,25 +135,49 @@ class song_finder(object):
         return base_url
 
     def select_random(self, qs):
-        nr = qs.count()
-        rand = random.randint(0,nr-1)
-        entry = qs.order_by('id')[rand]
+        nr = qs.count ()
+        rand = random.randint (0, nr - 1)
+        entry = qs [rand]
         return entry
 
-    def getRandom(self):
+    def getRandomSong (self):
+        djrandom_options = DJRandomOptions.snapshot ()
+        mood = djrandom_options.mood
+
+        if mood == DJRandomOptions.MOOD_BEST:
+            mood_weights = self.songweight_best
+        elif mood == DJRandomOptions.MOOD_LEAST_VOTES:
+            return self.get_least_voted (djrandom_options)
+        else:
+            mood_weights = self.songweight
+
         query = self.max_songlength and Song.active.filter(song_length__lt = self.max_songlength) or Song.active.all()
-        song = self.select_random(query)
+        query = query.filter (locked_until__lt = datetime.now ())
+        song = self.select_random (query)
+
         C = 0
         self.log.debug("Trying to find a random song")
-        # Try to find a good song that is not locked. Will try up to 10 times.
-        while not self.isGoodSong(song) and C < 10:
+
+        # Try to find a good song that is not locked. Will try up to 50 times.
+        while not self.isGoodSong (song, djrandom_options, mood_weights) and C < 50:
            self.log.debug("Random %s - song : %s [%s]" % (C, song.title, song.id))
            song = self.select_random(query)
            C += 1
+
         self.log.debug("Using song %s (%s)" % (song.title, song.id))
-        Q = common.queue_song(song, self.dj_user, False, True)
-        common.play_queued(Q)
+
         return song
+
+    def get_least_voted (self, djrandom_options):
+        # Get songs, least voted songs first. Songs with the same amount of votes
+        # are given in a pseudo random order
+        order_by = ['rating_votes', 'times_played', 'rnd']
+        if djrandom_options.avoid_explicit:
+            order_by.insert (0, "explicit")
+
+        qs = Song.active.filter (locked_until__lt = datetime.now()).order_by (*order_by)
+
+        return qs [0]
 
     def init_jt(self):
         self.jt = {
@@ -138,24 +187,27 @@ class song_finder(object):
             'min': timedelta(minutes = 20)
         }
 
-    def isGoodSong(self, song):
+    def isGoodSong(self, song, djrandom_options, mood_weights):
         """Check if song is a good song to play
 
         Checks if song is locked, and if that voteclass of songs have been played recently.
         Returns true or false
         """
-        if song.is_locked() :
+
+        if djrandom_options.avoid_explicit and song.explicit:
             return False
 
         if song.rating_votes < self.min_votes: # Not voted or few votes
             C = 'N'
         else:
-            C = int(round(song.rating))
-        if self.weight_table[C] >= self.songweight[C]:
+            C = int(round(2 * song.rating)) / 2.0
+
+        if self.weight_table[C] >= mood_weights[C]:
             self.weight_table[C] = 0
             return True
         for X in self.weight_table.keys():
             self.weight_table[X] += 1
+
         return False
 
     def JingleTime(self):

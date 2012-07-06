@@ -1,5 +1,6 @@
-from demovibes.webview.models import *
-from demovibes.webview.common import *
+from webview.models import *
+from webview.forms import *
+from webview.common import *
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.views.decorators.cache import cache_control
@@ -202,6 +203,46 @@ def words (request, prefix):
     words.extend ( [a for a in extrawords if a.lower().startswith (prefix.lower() ) ] )
 
     return HttpResponse (",".join (words))
+
+
+def djrandom_mood (request):
+    """Called on request from queue list in order to change mood."""
+
+    if not request.user.has_perm ('webview.change_djrandom_options'):
+        return HttpResponse("NoAuth")
+
+    form = DJRandomMoodForm (request.POST)
+    if form.is_valid ():
+        comment = request.user.username
+        DJRandomOptions.mood.set_with_comment (form.get_mood (), comment)
+        models.add_event (event = 'djrandom_mood')
+    else:
+        djrandom_options = DJRandomOptions.snapshot ()
+        mood = djrandom_options.mood
+        form = DJRandomMoodForm (initial = {'mood' : mood})
+        comment = mood.comment
+
+    return HttpResponse (form.get_mood_html (set_by = comment))
+
+
+def djrandom_avoid_explicit (request):
+    """Called on request from queue page in order to change avoid explicit option."""
+
+    if not request.user.has_perm ('webview.change_djrandom_options'):
+        return HttpResponse("NoAuth")
+
+    form = DJRandomAvoidExplicitForm (request.POST)
+    if form.is_valid ():
+        comment = request.user.username
+        DJRandomOptions.avoid_explicit.set_with_comment (form.get_avoid_explicit (), comment)
+        models.add_event (event = "djrandom_avoid_explicit")
+    else:
+        djrandom_options = DJRandomOptions.snapshot ()
+        avoid_explicit = djrandom_options.avoid_explicit
+        form = DJRandomAvoidExplicitForm (initial = {'avoid_explicit' : avoid_explicit})
+        comment = avoid_explicit.comment
+
+    return HttpResponse (form.get_avoid_explicit_html (set_by = comment))
 
 
 #  LocalWords:  uonli slength NoAuth img src slock png boobietrap

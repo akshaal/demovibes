@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from webview.decorators import atomic
 from django.db import models
 from django.contrib.auth.models import User
 import datetime
@@ -32,6 +33,18 @@ import tagging
 import time, hashlib
 
 import random
+
+
+class IntWithComment (int):
+    def __new__ (cls, v, comment = ""):
+        x = int.__new__ (cls, v)
+        x.__comment = comment
+        return x
+
+    @property
+    def comment (self):
+        return self.__comment
+
 
 class TimeDelta(datetime.timedelta):
     def total_seconds(self):
@@ -219,6 +232,163 @@ from managers import LockingManager, ActiveSongManager
 #Used for artist / song listing
 alphalist = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
              'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+
+
+def int_rnd_val (cls = None):
+    """Get next random integer comaptiable with a db."""
+
+    return random.randint(-2147483648, 2147483647)
+
+
+class DBSetting (models.Model):
+    """Setting that is supposed to be kept in the database."""
+
+    name = models.CharField (max_length = 255, unique = True)
+    value = models.CharField (max_length = 255, blank = True)
+
+
+class BaseLiveOption (object):
+    """Base class for all live options."""
+
+    def __init__ (self, key, default, timeout = 24 * 60 * 60):
+        self.__key = key
+        self.__cache_key = "live-option-" + key
+        self.__default = default
+        self.__timeout = timeout
+
+        atomic_key = "live-option-lock-" + key
+        self.__atomic_db_get = atomic (key = atomic_key) (self.__db_get)
+        self.set = atomic (key = atomic_key) (self.__db_set)
+
+    def get (self):
+        """Get value."""
+
+        svalue = cache.get (self.__cache_key)
+        if svalue == None:
+            svalue = self.__atomic_db_get ()
+
+        return self._from_str (svalue)
+
+    def __db_get (self):
+        """Try to get value from cache or fetch from db and init cache."""
+
+        # We need to try from cache, since it might have been set since the last call
+        svalue = cache.get (self.__cache_key)
+
+        if svalue == None:
+            # Still not in cache. Lets fetch from db
+            try:
+                dbsetting = DBSetting.objects.get (name = self.__key)
+                svalue = dbsetting.value
+            except DBSetting.DoesNotExist:
+                # Oh, not even in db, lets save default value
+                svalue = self._to_str (self.__default)
+                dbsetting = DBSetting (name = self.__key, value = svalue)
+                dbsetting.save ()
+
+            # Decode and store in cache
+            cache.set (self.__cache_key, svalue, self.__timeout)
+
+        return svalue
+
+    def __db_set (self, value):
+        """Set value. This method should always be atomic with the same lock as __db_get."""
+
+        svalue = self._to_str (value)
+
+        try:
+            dbsetting = DBSetting.objects.get (name = self.__key)
+            dbsetting.value = svalue
+        except DBSetting.DoesNotExist:
+            # Oh, not even in db, lets save default value
+            dbsetting = DBSetting (name = self.__key, value = svalue)
+
+        dbsetting.save ()
+
+        cache.set (self.__cache_key, svalue, self.__timeout)
+
+
+class IntegerOption (BaseLiveOption):
+    """An integer option."""
+
+    def __init__ (self, key, default):
+        super (IntegerOption, self).__init__ (key = key, default = default)
+
+    def _to_str (self, value):
+        return str (value)
+
+    def _from_str (self, s):
+        return int (s)
+
+    def __int__ (self):
+        return self.get ()
+
+    def __index__ (self):
+        return self.get ()
+
+
+class IntegerOptionWithComment (BaseLiveOption):
+    """An integer option with an optional comment."""
+
+    def __init__ (self, key, default):
+        super (IntegerOptionWithComment, self).__init__ (key = key, default = default)
+
+    def _to_str (self, value):
+        if isinstance (value, IntWithComment):
+            return str (value) + ":" + value.comment
+
+        return str (value) + ":"
+
+    def _from_str (self, s):
+        if ":" in s:
+            value, comment = s.split (":", 1)
+            return IntWithComment (int (value), comment)
+
+        return IntWithComment (int (s))
+
+    def set_with_comment (self, v, comment):
+        self.set (IntWithComment (v, comment))
+
+    def __int__ (self):
+        return self.get ()
+
+    def __index__ (self):
+        return self.get ()
+
+
+class Struct:
+    """
+    Convenience class to create object from properties.
+    """
+
+    def __init__(self, **entries):
+        self.__dict__.update (entries)
+
+    def __repr__ (self):
+        return "Struct" + repr (self.__dict__)
+
+
+class OptionGroup (object):
+    """Group of live options."""
+
+    @classmethod
+    def snapshot (cls):
+        """Return values of all options in the option group. Something like a snapshot."""
+
+        pairs = [(k, v.get()) for k, v in cls.__dict__.items() if isinstance(v, BaseLiveOption)]
+        kwargs = dict (pairs)
+        return Struct (**kwargs)
+
+
+class DJRandomOptions (OptionGroup):
+    """Options for DJRandom."""
+
+    MOOD_NORMAL = 0
+    MOOD_LEAST_VOTES = 1
+    MOOD_BEST = 2
+
+    avoid_explicit = IntegerOptionWithComment (key = "djrandom-avoid-explicit", default = False)
+    mood = IntegerOptionWithComment (key = "djrandom-moood", default = MOOD_NORMAL)
 
 
 class Group(models.Model):
@@ -1015,6 +1185,10 @@ class Song(models.Model):
     pouettitle = models.CharField(max_length=100, blank = True)
     license = models.ForeignKey("SongLicense", blank=True, null=True)
 
+    # column with a random number helps to make quick pseudo-random ordering
+    rnd = models.IntegerField (blank = False, null = False, editable = False,
+                               default = int_rnd_val, db_index = True)
+
     objects = models.Manager()
     active = ActiveSongManager()
 
@@ -1671,6 +1845,11 @@ class SongDownload(models.Model):
 
 
 class Queue(models.Model):
+    class Meta:
+        permissions = (
+            ('change_djrandom_options', "Change DJRandom options"),
+        )
+
     eta = models.DateTimeField(blank = True, null = True)
     played = models.BooleanField(db_index = True)
     playtime = models.DateTimeField(blank = True, null = True, db_index = True)

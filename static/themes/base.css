@@ -5,6 +5,7 @@
 #main #profileform {
     width: 100%
 }
+
 #main #profileform #id_info {
     width: 95%;
 }
@@ -66,10 +67,12 @@ ul.errorlist li {
 #main h2 {
     clear:both;
 }
+
 #searchform ul {
-margin: 0 !important;
-padding: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
+
 #searchform li {
     display: inline;
 }
@@ -87,14 +90,26 @@ div.taglist {
     -webkit-border-top-left-radius:10px;
 }
 
-div.taglist p:first-child { margin-top: 0; }
+div.taglist p:first-child {
+    margin-top: 0;
+}
 
-#tagfield { width:90%;}
+#tagfield {
+    width:90%;
+}
 
-#tagcloud   {background-image: url("/static/comment.png");}
-#statistics   {background-image: url("/static/statistics.png");}
+#tagcloud {
+    background-image: url("/static/comment.png");
+}
 
-#lic-info {float: right; width: 60%;}
+#statistics {
+    background-image: url("/static/statistics.png");
+}
+
+#lic-info {
+    float: right;
+    width: 60%;
+}
 
 div.screenshot {
     padding: 3px;
@@ -104,17 +119,21 @@ div.screenshot {
     height: 150px;
     width: 128px;
 }
+
 span.screenshotname {
     font-weight: bold;
     font-style: italic;
 }
+
 div.clear {
     clear: both;
 }
+
 .profile-theme {
     float: right;
     font-size: 1.2em;
 }
+
 div#screenshot-image {
     float: left;
     margin-right: 25px;
@@ -125,6 +144,7 @@ div#songinfo-title {
     font-weight: bold;
     margin-bottom: 5px;
 }
+
 div#screenshot-connected li {
     list-style-type: none;
 }
@@ -140,6 +160,7 @@ div.screenshot:hover {
     border: 1px solid #000;
     text-align: center;
 }
+
 .ytvidlink span.yttitle {
     margin: 2px;
     visibility: hidden;
@@ -150,12 +171,13 @@ div.screenshot:hover {
     width: 120px;
     color: #fff;
     opacity: 0.5;
-
 }
+
 .ytvidlink span.yttitle:hover {
     background-color: #000;
     opacity: 1.0;
 }
+
 .ytvidlink span.overlay {
     position:absolute;
     bottom:1px;
@@ -165,6 +187,7 @@ div.screenshot:hover {
     -khtml-opacity: 0.5;
     opacity: 0.5;
 }
+
 .youtube-link {
     position: relative;
     display: inline-block;
@@ -175,8 +198,9 @@ div.screenshot:hover {
 .editbar {
     padding-left: 10px;
 }
+
 .editButton {
-padding: 2px;
+    padding: 2px;
 }
 
 .ytpopupdesc {
@@ -184,11 +208,13 @@ padding: 2px;
     padding: 5px;
     padding-top: 0;
 }
+
 .ytpopupdata {
     text-align: center;
     margin-top: 10px;
     margin-right: 5px;
 }
+
 .messageholder {
     opacity: .9;
     padding: 0.2em;
@@ -196,10 +222,12 @@ padding: 2px;
     background-color: #D1EFC3;
     cursor: pointer;
 }
+
 .messageholder:hover {
     opacity: 1;
     background-color: #E1FFD3;
 }
+
 .messagetitle {
     background-color: #8FC7FF;
     padding: 2px;
@@ -207,22 +235,27 @@ padding: 2px;
     padding-left: 1em;
     cursor: pointer;
 }
+
 .message-display-settings {
     cursor: pointer;
 }
+
 .message-display-settings:hover {
     color: #5A5A5A;
 }
+
 .messagebox {
     width: 100%;
     position:fixed;
     top:0;
     left:0;
 }
+
 .messagetime,.messagecat {
     padding-right: 1em;
     font-size:70%;
 }
+
 .messagefadeborder {
     float: right;
     width: 50px;
@@ -270,16 +303,20 @@ padding: 2px;
     cursor: pointer;
     border-bottom: 2px solid #6DC94C;
 }
+
 .message-disabled-true {
     border-bottom: 2px solid #C44D37;
 }
+
 .messagecat {
     min-width: 4.5em;
     display: inline-block;
 }
+
 .messagetitle-flash {
     background-color: #fff;
 }
+
 .message-remove  {
     float: right;
     cursor: pointer;
@@ -288,9 +325,11 @@ padding: 2px;
 .linkform {
     display:inline;
 }
+
 .starview {
     height: 28px;
 }
+
 .starbutton {
     border: 0;
     height: 25px;
@@ -306,6 +345,7 @@ padding: 2px;
 .star-selected,.starbutton:hover {
     background: url('../star-gold.png') no-repeat;
 }
+
 .ajax-working {
     opacity:0.4;
 }
@@ -330,21 +370,26 @@ padding: 2px;
     height: 100%;
     z-index: 10;
 }
+
 .theme {
     float: left;
     padding: 1em;
     height:220px;
 }
+
 .theme_shot {
     float: left;
 }
+
 .activetheme {
     border: 1px solid #000;
     height:218px;
 }
+
 .themeimage_large {
     float: right;
 }
+
 .smileybox {
     border: 1px solid #000;
     background-color: #BFBFBF;
@@ -357,11 +402,13 @@ padding: 2px;
     width: 500px;
     margin-left: -250px;
 }
+
 .smileybox-smiley {
     float: left;
     padding: 5px;
-
+    
 }
+
 .smileybox-smiley:hover {
     border: 2px solid #000;
     padding: 3px;
@@ -370,4 +417,16 @@ padding: 2px;
 
 .smileys-clicker {
     cursor: pointer;
+}
+
+.edit_inline {
+    cursor: pointer;
+}
+
+#djrandom-options {
+    padding-top: 7px;
+}
+
+#djrandom-quote-nick {
+    color: #77eeff;
 }
