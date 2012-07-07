@@ -18,6 +18,7 @@ from django.core.cache import cache
 from django.template.defaultfilters import striptags
 from django.contrib.sites.models import Site
 from django.template import Context, loader
+from django.db.models import Q as DQ
 from django.db.models.signals import post_save, pre_save
 from django.utils.translation import ugettext_lazy as _
 
@@ -49,18 +50,33 @@ class IntWithComment (int):
 class TimeDelta(datetime.timedelta):
     def total_seconds(self):
         return (self.seconds + self.days * 24 * 3600)
-    def to_string(self):
+
+    def to_string (self, day_delim = None):
         s = self.total_seconds()
+
         padding = ""
         if s < 0:
             s = s * -1
             padding = "-"
-        hours, remainder = divmod(s, 3600)
-        minutes, seconds = divmod(remainder, 60)
-        time1 = "%02d:%02d" % (minutes, seconds)
-        if hours:
-            return padding + "%s:" % hours + time1
-        return padding + time1
+
+        if day_delim:
+            days, remainder = divmod (s, 3600 * 24)
+        else:
+            days = 0
+            remainder = s
+
+        hours, remainder = divmod (remainder, 3600)
+        minutes, seconds = divmod (remainder, 60)
+
+        time = "%02d:%02d" % (minutes, seconds)
+
+        if hours or days:
+            time = "%s:" % hours + time
+
+        if days:
+            time = str (days) + day_delim + time
+
+        return padding + time
 
 log = logging.getLogger("webview.models")
 
@@ -1197,6 +1213,10 @@ class Song(models.Model):
 
     #def display(self):
     #    return "song"
+
+    @staticmethod
+    def unlocked_condition ():
+        return DQ(locked_until__lt = datetime.datetime.now()) | DQ(locked_until = None)
 
     def create_lock_time(self):
         sl = settings.SONG_LOCK_TIME

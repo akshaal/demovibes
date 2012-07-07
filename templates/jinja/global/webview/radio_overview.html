@@ -1,0 +1,29 @@
+{% extends "base/base.html" %}
+
+{% block main %}
+
+<h2><img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />{{ gettext("Overview") }}</h2>
+
+<h2><img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />{{ gettext("Votes distribution") }}</h2>
+
+<table class="songlist statistics">
+    <tr>
+        <th>{{ gettext("Votes") }}</th>
+        <th>{{ gettext("Total songs") }}</th>
+        <th>{{ gettext("Total playtime") }}</th>
+        <th>{{ gettext("Unlocked songs") }}</th>
+        <th>{{ gettext("Unlocked playtime") }}</th>
+    </tr>
+    
+    {% for stat in vote_stats %}
+        <tr class="{{ loop.cycle('row1', 'row2') }}">
+            <td>{{ stat['rating_votes'] }}</td>
+            <td>{{ stat['count'] }}</td>
+            <td>{{ stat['total_playtime'].to_string (gettext(" days ")) }}</td>
+            <td>{{ stat['unlocked_count'] }}</td>
+            <td>{{ stat['unlocked_playtime'].to_string (gettext(" days ")) }}</td>
+        </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

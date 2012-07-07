@@ -10,7 +10,6 @@ setup_environ(settings)
 from webview.models import Queue, Song, DJRandomOptions
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
-from django.db.models import Q
 
 from webview import common
 
@@ -177,8 +176,7 @@ class song_finder(object):
         if djrandom_options.avoid_explicit:
             order_by.insert (0, "explicit")
 
-        condition = Q(locked_until__lt = datetime.now()) | Q(locked_until = None)
-        qs = Song.active.filter (condition).order_by (*order_by)
+        qs = Song.active.filter (Song.unlocked_condition()).order_by (*order_by)
 
         return qs [0]
 

@@ -26,6 +26,7 @@ from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.cache import cache
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth import authenticate, login
+from django.db.models import Count, Sum
 
 import logging, datetime
 
@@ -1022,6 +1023,49 @@ def showRecentChanges(request):
     # To show real changes, without stressing out the SQL loads
     return j2shim.r2r('webview/recent_changes.html', {'songs' : songlist, 'artists' : artistlist, 'groups' : grouplist,
       'labels' : labellist, 'compilations' : complist}, request=request)
+
+
+class RadioOverview (WebView):
+    template = "radio_overview.html"
+    cache_key = "radio-overview-context"
+    cache_duration = 60
+    cache_hash_key = False
+
+    def list_votes_stats (self):
+        # It is hard or impossible to write that with current django without issuing two queries
+        # because django doesn't support expressions in annotations...
+
+        def qfiltered (f = None):
+            q = m.Song.active
+            if f:
+                q = q.filter (f)
+            q = q.values ('rating_votes')
+            q = q.annotate (count = Count('rating_votes'), total_playtime = Sum('song_length'))
+            q = q.order_by ('rating_votes')
+            return q [:5]
+
+        # Get total
+        by_votes = {}
+        stats = qfiltered ()
+        for stat in stats:
+            by_votes [stat['rating_votes']] = stat
+            stat ['unlocked_count'] = 0
+            stat ['unlocked_playtime'] = m.TimeDelta (0)
+            stat ['total_playtime'] = m.TimeDelta (seconds = stat ['total_playtime'])
+
+        # Mix-in playable stats
+        for pstat in qfiltered (m.Song.unlocked_condition()):
+            votes = pstat ['rating_votes']
+            if votes in by_votes:
+                stat = by_votes [votes]
+                stat ['unlocked_count'] = pstat ['count']
+                stat ['unlocked_playtime'] = m.TimeDelta (seconds = pstat ['total_playtime'])
+
+        return stats
+
+    def set_cached_context (self):
+        # Result is supposed to be cached on page level
+        return {'vote_stats': self.list_votes_stats ()}
 
 
 class RadioStatus(WebView):
