@@ -387,7 +387,7 @@ class DJRandomOptions (OptionGroup):
     MOOD_LEAST_VOTES = 1
     MOOD_BEST = 2
 
-    avoid_explicit = IntegerOptionWithComment (key = "djrandom-avoid-explicit", default = False)
+    avoid_explicit = IntegerOptionWithComment (key = "djrandom-avoid-explicit", default = 0)
     mood = IntegerOptionWithComment (key = "djrandom-moood", default = MOOD_NORMAL)
 
 
