@@ -1216,7 +1216,7 @@ class Song(models.Model):
 
     @staticmethod
     def unlocked_condition ():
-        return DQ(locked_until__lt = datetime.datetime.now()) | DQ(locked_until = None)
+        return DQ(status = 'A') & (DQ(locked_until__lt = datetime.datetime.now()) | DQ(locked_until = None))
 
     def create_lock_time(self):
         sl = settings.SONG_LOCK_TIME
