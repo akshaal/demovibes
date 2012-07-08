@@ -28,7 +28,7 @@ from django.core.cache import cache
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth import authenticate, login
 from django.db import DatabaseError
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Avg
 
 import logging
 import datetime
@@ -1034,7 +1034,7 @@ class UsersOverview (WebView):
         limit = 50
 
         by_votes_q = m.User.objects.values("username")
-        by_votes_q = by_votes_q.annotate (count = Count("songvote"))
+        by_votes_q = by_votes_q.annotate (count = Count("songvote"), avg = Avg('songvote__vote'))
         by_votes_q = by_votes_q.order_by ('-count')
         by_votes_q = by_votes_q [:limit]
 
