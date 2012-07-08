@@ -1035,7 +1035,7 @@ class UsersOverview (WebView):
 
         country_stats_q = m.User.objects.values ("userprofile__country")
         country_stats_q = country_stats_q.annotate (count = Count("pk"))
-        country_stats_q = country_stats_q.order_by ('-count')
+        country_stats_q = country_stats_q.order_by ('-count', "userprofile__country")
 
         by_votes_q = m.User.objects.values ("username", 'userprofile__country')
         by_votes_q = by_votes_q.annotate (count = Count("songvote"), avg = Avg('songvote__vote'))
