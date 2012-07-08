@@ -1048,7 +1048,7 @@ class RadioOverview (WebView):
 
     @cached_method (key = "RadioOverview-source_stats", timeout = 60)
     def list_source_stats (self):
-        type_by_id = {None : ""}
+        type_by_id = {None : m.Struct (title = "----------------")}
         for type in m.SongType.objects.all():
             type_by_id [type.id] = type
 
@@ -1093,7 +1093,7 @@ class RadioOverview (WebView):
             if f:
                 q = q.filter (f)
             q = q.values (field)
-            q = q.annotate (count = Count(field), total_playtime = Sum('song_length'))
+            q = q.annotate (count = Count("pk"), total_playtime = Sum('song_length'))
             q = q.order_by (field)
             if limit:
                 return q [:limit]
