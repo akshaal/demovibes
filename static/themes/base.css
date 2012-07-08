@@ -430,3 +430,8 @@ div.screenshot:hover {
 #djrandom-quote-nick {
     color: #77eeff;
 }
+
+#users_overview, #top_voters, #top_uploaders, #top_oneliners, #top_taggers, #top_requesters,
+#top_commentators, #top_posters {
+    display: inline-block;
+}

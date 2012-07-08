@@ -6,6 +6,7 @@
   </h2>
   
   <p><a href="{{ url("dv-radio-overview") }}">{{ gettext("Overview") }}</a> - {{ gettext("Radio by numbers.") }}</p>
+  <p><a href="{{ url("dv-users-overview") }}">{{ gettext("Users") }}</a> - {{ gettext("Top voters/uploaders/chatters...") }}</p>
   
   {% for word, vals in keys.items() %}
     <p><a href="{{ url("dv-stats", word) }}">{{ word|capitalize }}</a> - {{ vals[0] }}</p>

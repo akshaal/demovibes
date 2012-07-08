@@ -1,0 +1,88 @@
+{% extends "base/base.html" %}
+
+{# =============== list_stats macro =============== #}
+{% macro list_stats(stats_list, field, heading) %}
+    <table class="userstatlist statistics">
+        <tr>
+            <th>{{ gettext("User") }}</th>
+            <th>{{ gettext(heading) }}</th>
+        </tr>
+        
+        {% for stat in stats_list %}
+            <tr class="{{ loop.cycle('row1', 'row2') }}">
+                <td>{{ stat[field] }}</td>
+                <td>{{ stat['count'] }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endmacro %}
+    
+{% block main %}
+    {% cache 86400 "users_overview_html" %}
+        <div id="users_overview">
+            {# =============== Top voters =============== #}
+            <div id="top_voters">
+                <h2>
+                    <img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />
+                    {{ gettext("Top voters") }}
+                </h2>
+                {{ list_stats(by_votes_q, 'username', 'Votes') }}
+            </div>
+            
+            {# =============== Top uploaders =============== #}
+            <div id="top_uploaders">
+                <h2>
+                    <img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />
+                    {{ gettext("Top uploaders") }}
+                </h2>
+                {{ list_stats(by_uploads_q, 'uploaded_by__username', 'Uploads') }}
+            </div>
+            
+            {# =============== Top oneliners =============== #}
+            <div id="top_oneliners">
+                <h2>
+                    <img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />
+                    {{ gettext("Top oneliners") }}
+                </h2>
+                {{ list_stats(by_oneliner_q, 'username', 'Spoken') }}
+            </div>
+            
+            {# =============== Top tag setters =============== #}
+            <div id="top_taggers">
+                <h2>
+                    <img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />
+                    {{ gettext("Top taggers") }}
+                </h2>
+                {{ list_stats(by_tagging_q, 'user__username', 'Changes') }}
+            </div>
+            
+            {# =============== Top requester =============== #}
+            <div id="top_requesters">
+                <h2>
+                    <img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />
+                    {{ gettext("Top requesters") }}
+                </h2>
+                {{ list_stats(by_requester_q, 'requested_by__username', 'Requests') }}
+            </div>
+            
+            {# =============== Top posters =============== #}
+            <div id="top_posters">
+                <h2>
+                    <img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />
+                    {{ gettext("Top forum posters") }}
+                </h2>
+                {{ list_stats(by_posts_q, 'author__username', 'Posts') }}
+            </div>
+            
+            {# =============== Top commentators =============== #}
+            <div id="top_commentators">
+                <h2>
+                    <img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />
+                    {{ gettext("Top song commentators") }}
+                </h2>
+                {{ list_stats(by_comments_q, 'user__username', 'Comments') }}
+            </div>
+        </div>
+    {% endcache %}
+{% endblock %}
+        

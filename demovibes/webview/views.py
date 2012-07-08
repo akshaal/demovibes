@@ -10,6 +10,8 @@ from mybaseview import MyBaseView
 from tagging.models import TaggedItem
 import tagging.utils
 
+from forum import models as fm
+
 from django.template import Context, loader
 from django.utils.html import escape
 from django.utils.translation import ugettext as _
@@ -1023,6 +1025,57 @@ def showRecentChanges(request):
     # To show real changes, without stressing out the SQL loads
     return j2shim.r2r('webview/recent_changes.html', {'songs' : songlist, 'artists' : artistlist, 'groups' : grouplist,
       'labels' : labellist, 'compilations' : complist}, request=request)
+
+
+class UsersOverview (WebView):
+    template = "users_overview.html"
+
+    def set_context (self):
+        limit = 50
+
+        by_votes_q = m.User.objects.values("username")
+        by_votes_q = by_votes_q.annotate (count = Count("songvote"))
+        by_votes_q = by_votes_q.order_by ('-count')
+        by_votes_q = by_votes_q [:limit]
+
+        by_oneliner_q = m.User.objects.values("username")
+        by_oneliner_q = by_oneliner_q.annotate (count = Count("oneliner"))
+        by_oneliner_q = by_oneliner_q.order_by ('-count')
+        by_oneliner_q = by_oneliner_q [:limit]
+
+        by_uploads_q = m.SongApprovals.objects.values("uploaded_by__username")
+        by_uploads_q = by_uploads_q.annotate (count = Count("pk"))
+        by_uploads_q = by_uploads_q.order_by ('-count')
+        by_uploads_q = by_uploads_q [:limit]
+
+        by_tagging_q = m.TagHistory.objects.values("user__username")
+        by_tagging_q = by_tagging_q.annotate (count = Count("pk"))
+        by_tagging_q = by_tagging_q.order_by ('-count')
+        by_tagging_q = by_tagging_q [:limit]
+
+        by_requester_q = m.Queue.objects.values("requested_by__username")
+        by_requester_q = by_requester_q.annotate (count = Count("pk"))
+        by_requester_q = by_requester_q.order_by ('-count')
+        by_requester_q = by_requester_q [:limit]
+
+        by_comments_q = m.SongComment.objects.values("user__username")
+        by_comments_q = by_comments_q.annotate (count = Count("pk"))
+        by_comments_q = by_comments_q.order_by ('-count')
+        by_comments_q = by_comments_q [:limit]
+
+        by_posts_q = fm.Post.objects.values("author__username")
+        by_posts_q = by_posts_q.annotate (count = Count("pk"))
+        by_posts_q = by_posts_q.order_by ('-count')
+        by_posts_q = by_posts_q [:limit]
+
+        # We can return queries, since they are lazy. It is supposed that access is cached in html
+        return {'by_votes_q'            : by_votes_q,
+                'by_oneliner_q'         : by_oneliner_q,
+                'by_requester_q'        : by_requester_q,
+                'by_comments_q'         : by_comments_q,
+                'by_posts_q'            : by_posts_q,
+                'by_tagging_q'          : by_tagging_q,
+                'by_uploads_q'          : by_uploads_q}
 
 
 class RadioOverview (WebView):

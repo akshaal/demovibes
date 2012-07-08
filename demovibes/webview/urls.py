@@ -133,7 +133,8 @@ urlpatterns = patterns('',
     url(r'^group/(?P<object_id>\d+)/$',            'django.views.generic.list_detail.object_detail',       group_a_dict, name = "dv-group"),
 
     url(r'^statistics/$',                           views.RadioStatus(), name = "dv-stats-index"),
-    url(r'^statistics/radio/overview/$',            views.RadioOverview(), name = "dv-radio-overview"),
+    url(r'^statistics/overview/radio/$',            views.RadioOverview(), name = "dv-radio-overview"),
+    url(r'^statistics/overview/users/$',            views.UsersOverview(), name = "dv-users-overview"),
     url(r'^statistics/(?P<stattype>\w+)/$',         views.RadioStatus(), name = "dv-stats"),
 
     # Updated Information, such as groups, labels etc.
