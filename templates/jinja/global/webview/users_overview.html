@@ -1,16 +1,24 @@
 {% extends "base/base.html" %}
 
 {# =============== list_stats macro =============== #}
-{% macro list_stats(stats_list, field, heading) %}
+{% macro list_stats(stats_list, heading, user_path = []) %}
+    {% set username_field = "__".join (user_path + ["username"]) %}
+    {% set country_field = "__".join (user_path + ["userprofile__country"]) %}
+
     <table class="userstatlist statistics">
         <tr>
-            <th>{{ gettext("User") }}</th>
-            <th>{{ gettext(heading) }}</th>
+            <th>{{ gettext("User") }}</th>
+            <th>{{ gettext(heading) }}</th>
         </tr>
         
         {% for stat in stats_list if stat['count'] != 0 %}
             <tr class="{{ loop.cycle('row1', 'row2') }}">
-                <td>{{ stat[field] }}</td>
+                <td>
+                    <span>
+                        {{ dv.flag(stat[country_field]) }}
+                        <a href="/demovibes/user/{{ stat[field]|e }}/">{{ stat[username_field]|e }}</a>
+                    </span>
+                </td>
                 <td>{{ stat['count'] }}</td>
             </tr>
         {% endfor %}
@@ -35,7 +43,12 @@
                     
                     {% for stat in by_votes_q if stat['count'] != 0 %}
                         <tr class="{{ loop.cycle('row1', 'row2') }}">
-                            <td>{{ stat['username'] }}</td>
+                            <td>
+                                <span>
+                                    {{ dv.flag(stat['userprofile__country']) }}
+                                    <a href="/demovibes/user/{{ stat['username']|e }}/">{{ stat['username']|e }}</a>
+                                </span>
+                            </td>
                             <td>{{ stat['count'] }}</td>
                             <td>{{ stat['avg']|round(1) }}</td>
                         </tr>
@@ -49,7 +62,7 @@
                     <img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />
                     {{ gettext("Top uploaders") }}
                 </h2>
-                {{ list_stats(by_uploads_q, 'uploaded_by__username', 'Uploads') }}
+                {{ list_stats(by_uploads_q, 'Uploads', user_path = ['uploaded_by']) }}
             </div>
             
             {# =============== Top oneliners =============== #}
@@ -58,7 +71,7 @@
                     <img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />
                     {{ gettext("Top oneliners") }}
                 </h2>
-                {{ list_stats(by_oneliner_q, 'username', 'Spoken') }}
+                {{ list_stats(by_oneliner_q, 'Spoken') }}
             </div>
             
             {# =============== Top tag setters =============== #}
@@ -67,7 +80,7 @@
                     <img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />
                     {{ gettext("Top taggers") }}
                 </h2>
-                {{ list_stats(by_tagging_q, 'user__username', 'Changes') }}
+                {{ list_stats(by_tagging_q, 'Changes', user_path = ['user']) }}
             </div>
             
             {# =============== Top requester =============== #}
@@ -76,7 +89,7 @@
                     <img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />
                     {{ gettext("Top requesters") }}
                 </h2>
-                {{ list_stats(by_requester_q, 'requested_by__username', 'Requests') }}
+                {{ list_stats(by_requester_q, 'Requests', user_path = ['requested_by']) }}
             </div>
             
             {# =============== Top posters =============== #}
@@ -85,7 +98,7 @@
                     <img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />
                     {{ gettext("Top forum posters") }}
                 </h2>
-                {{ list_stats(by_posts_q, 'author__username', 'Posts') }}
+                {{ list_stats(by_posts_q, 'Posts', user_path = ['author']) }}
             </div>
             
             {# =============== Top commentators =============== #}
@@ -94,7 +107,7 @@
                     <img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />
                     {{ gettext("Top song commentators") }}
                 </h2>
-                {{ list_stats(by_comments_q, 'user__username', 'Comments') }}
+                {{ list_stats(by_comments_q, 'Comments', user_path = ['user']) }}
             </div>
         </div>
     {% endcache %}
