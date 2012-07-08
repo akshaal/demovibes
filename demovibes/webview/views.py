@@ -1048,7 +1048,7 @@ class RadioOverview (WebView):
 
     @cached_method (key = "RadioOverview-source_stats", timeout = 60)
     def list_source_stats (self):
-        type_by_id = {}
+        type_by_id = {None : ""}
         for type in m.SongType.objects.all():
             type_by_id [type.id] = type
 
