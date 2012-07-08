@@ -1117,6 +1117,13 @@ class RadioOverview (WebView):
 
         return stats
 
+    @cached_method (key = "RadioOverview-country_stats", timeout = 86400)
+    def list_country_stats (self):
+        return self.__list_grouped_by (
+            m.Song.active.filter (songmetadata__active = True),
+            'songmetadata__artists__home_country',
+            order_by = ['-count', 'songmetadata__artists__home_country'])
+
     @cached_method (key = "RadioOverview-set_context", timeout = 60)
     def set_context (self):
         # Overview
@@ -1137,13 +1144,14 @@ class RadioOverview (WebView):
         return {'vote_stats'                : self.list_votes_stats (),
                 "stats_by_status"           : stats_by_status,
                 "source_stats"              : self.list_source_stats (),
+                "country_stats"             : self.list_country_stats (),
                 'total_length'              : total_length,
                 'total_songs'               : total_songs,
                 'unlocked_length'           : unlocked_length,
                 'unlocked_songs'            : unlocked_songs,
                 'total_played'              : self.get_total_played ()}
 
-    def __list_grouped_by (self, qmanager, field, limit = None):
+    def __list_grouped_by (self, qmanager, field, limit = None, order_by = None):
         # It is hard or impossible to write that with current django without issuing two queries
         # because django doesn't support expressions in annotations...
 
@@ -1153,7 +1161,12 @@ class RadioOverview (WebView):
                 q = q.filter (f)
             q = q.values (field)
             q = q.annotate (count = Count("pk"), total_playtime = Sum('song_length'))
-            q = q.order_by (field)
+
+            if order_by:
+                q = q.order_by (*order_by)
+            else:
+                q = q.order_by (field)
+
             if limit:
                 return q [:limit]
             else:

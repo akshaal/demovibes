@@ -13,7 +13,7 @@
         
         {% for stat in stats_list %}
             <tr class="{{ loop.cycle('row1', 'row2') }}">
-                <td>{{ stat[field] }}</td>
+                <td>{{ stat[field]|e }}</td>
                 <td>{{ stat['count'] }}</td>
                 <td>{{ stat['total_playtime']|timedelta }}</td>
                 <td>{{ stat['unlocked_count'] }}</td>
@@ -62,4 +62,36 @@
         <h2><img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />{{ gettext("Votes distribution") }}</h2>
         {{ list_stats(vote_stats, 'rating_votes', 'Votes') }}
     {% endcache %}
+        
+    {% cache 43200 "radio_overview_by_country_html" %}
+        {# =============== By Country =============== #}
+        <h2><img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />{{ gettext("Country artists contribution") }}</h2>
+        <table class="songstatlist statistics">
+            <tr>
+                <th>{{ gettext("Country") }}</th>
+                <th>{{ gettext("Total songs") }}</th>
+                <th>{{ gettext("Total playtime") }}</th>
+                <th>{{ gettext("Unlocked songs") }}</th>
+                <th>{{ gettext("Unlocked playtime") }}</th>
+            </tr>
+            
+            {% for stat in country_stats %}
+                <tr class="{{ loop.cycle('row1', 'row2') }}">
+                    <td>
+                        {{ dv.flag(stat['songmetadata__artists__home_country']) }}
+                        {{ stat['songmetadata__artists__home_country']|e }}
+                    </td>
+                    
+                    <td>{{ stat['count'] }}</td>
+                    <td>{{ stat['total_playtime']|timedelta }}</td>
+                    <td>{{ stat['unlocked_count'] }}</td>
+                    <td>{{ stat['unlocked_playtime']|timedelta }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endcache %}
 {% endblock %}
+        
+        
+        
+        
