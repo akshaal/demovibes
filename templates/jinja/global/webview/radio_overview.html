@@ -1,29 +1,65 @@
 {% extends "base/base.html" %}
 
-{% block main %}
-
-<h2><img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />{{ gettext("Overview") }}</h2>
-
-<h2><img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />{{ gettext("Votes distribution") }}</h2>
-
-<table class="songlist statistics">
-    <tr>
-        <th>{{ gettext("Votes") }}</th>
-        <th>{{ gettext("Total songs") }}</th>
-        <th>{{ gettext("Total playtime") }}</th>
-        <th>{{ gettext("Unlocked songs") }}</th>
-        <th>{{ gettext("Unlocked playtime") }}</th>
-    </tr>
-    
-    {% for stat in vote_stats %}
-        <tr class="{{ loop.cycle('row1', 'row2') }}">
-            <td>{{ stat['rating_votes'] }}</td>
-            <td>{{ stat['count'] }}</td>
-            <td>{{ stat['total_playtime'].to_string (gettext(" days ")) }}</td>
-            <td>{{ stat['unlocked_count'] }}</td>
-            <td>{{ stat['unlocked_playtime'].to_string (gettext(" days ")) }}</td>
+{# =============== list_stats macro =============== #}
+{% macro list_stats(stats_list, field, heading) %}
+    <table class="songstatlist statistics">
+        <tr>
+            <th>{{ gettext(heading) }}</th>
+            <th>{{ gettext("Total songs") }}</th>
+            <th>{{ gettext("Total playtime") }}</th>
+            <th>{{ gettext("Unlocked songs") }}</th>
+            <th>{{ gettext("Unlocked playtime") }}</th>
         </tr>
-    {% endfor %}
-</table>
-
+        
+        {% for stat in stats_list %}
+            <tr class="{{ loop.cycle('row1', 'row2') }}">
+                <td>{{ stat[field] }}</td>
+                <td>{{ stat['count'] }}</td>
+                <td>{{ stat['total_playtime']|timedelta }}</td>
+                <td>{{ stat['unlocked_count'] }}</td>
+                <td>{{ stat['unlocked_playtime']|timedelta }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endmacro %}
+    
+{% block main %}
+    {% cache 60 "radio_overview_html" %}        
+        {# =============== Overview =============== #}
+        <h2><img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />{{ gettext("Overview") }}</h2>
+        <ul>
+            <li>
+                {{ gettext("Total ") }}
+                {{ total_songs }}
+                {{ gettext("songs with") }}
+                {{ total_length|timedelta }}
+                {{ gettext("of playback time.") }}
+            </li>
+            
+            <li>
+                {{ gettext("Unlocked ") }}
+                {{ unlocked_songs }}
+                {{ gettext("songs with") }}
+                {{ unlocked_length|timedelta }}
+                {{ gettext("of playback time.") }}
+            </li>
+            
+            <li>
+                {{ gettext("Songs queued ") }}
+                {{ total_played["total_times_played"] }}
+                {{ gettext("times with") }}
+                {{ total_played["total_played_length"]|timedelta }}
+                {{ gettext("of playback time.") }}
+            </li>
+        </ul>
+        {{ list_stats(stats_by_status, 'status', 'Status') }}
+        
+        {# =============== By Source =============== #}
+        <h2><img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />{{ gettext("Source statistics") }}</h2>
+        {{ list_stats(source_stats, 'source', 'Source') }}
+        
+        {# =============== By Votes =============== #}
+        <h2><img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />{{ gettext("Votes distribution") }}</h2>
+        {{ list_stats(vote_stats, 'rating_votes', 'Votes') }}
+    {% endcache %}
 {% endblock %}

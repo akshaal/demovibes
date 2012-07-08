@@ -1,8 +1,10 @@
 from django.conf import settings
 from django.utils import translation
+from django.utils.translation import ugettext as _
 from django.template import defaultfilters
 from jinja2 import escape
 
+from webview.models import TimeDelta
 from webview.templatetags import dv_extend
 
 def dummy(dummystuff):
@@ -40,6 +42,9 @@ def timeuntil(date):
     from datetime import datetime
     return timesince(datetime.now(),datetime(date.year, date.month, date.day))
 
+def timedelta(seconds):
+    return TimeDelta(seconds = int(seconds)).to_string (day_delim = _(" days "))
+
 def mksafe(arg):
     """
     Force escaping of html
@@ -60,6 +65,7 @@ FILTERS = {
     'pluralize': defaultfilters.pluralize,
     'timesince': timesince,
     'timeuntil': timeuntil,
+    'timedelta': timedelta,
     'floatformat': defaultfilters.floatformat,
     'linebreaks': defaultfilters.linebreaks,
     'linebreaksbr': defaultfilters.linebreaksbr,

@@ -25,3 +25,21 @@ def atomic (key, timeout = 30, wait = 60):
                     cache.delete(lockkey)
         return func2
     return func1
+
+
+def cached_method (key, timeout = 60):
+    """
+        Cache computation result regardless of arguments.
+    """
+
+    def func1 (func):
+        def func2 (*args, **kwargs):
+            result = cache.get (key)
+
+            if result == None:
+                result = func (*args, **kwargs)
+                cache.set (key, result, timeout)
+
+            return result
+        return func2
+    return func1

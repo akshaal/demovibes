@@ -1,18 +1,17 @@
 from webview import models as m
 from webview import forms as f
 from webview import common
-from webview.decorators import atomic
-from django.utils.html import escape
+from webview.decorators import atomic, cached_method
+
 from openid_provider.models import TrustedRoot
 
 from mybaseview import MyBaseView
 
-from django.db import DatabaseError
-
 from tagging.models import TaggedItem
 import tagging.utils
-from django.template import Context, loader
 
+from django.template import Context, loader
+from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.http import HttpResponseRedirect, HttpResponseNotFound, HttpResponse
 from django.contrib.auth.decorators import login_required, permission_required
@@ -26,15 +25,16 @@ from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.cache import cache
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth import authenticate, login
+from django.db import DatabaseError
 from django.db.models import Count, Sum
 
-import logging, datetime
-
+import logging
+import datetime
 import j2shim
 import hashlib
 import re
 import random
-# Create your views here.
+
 
 L = logging.getLogger('webview.views')
 
@@ -1026,46 +1026,98 @@ def showRecentChanges(request):
 
 
 class RadioOverview (WebView):
-    template = "radio_overview.html"
-    cache_key = "radio-overview-context"
-    cache_duration = 60
-    cache_hash_key = False
+    # This is supposed to be cached both on HTML level (to avoid overheads on HTML rendering)
+    # and on code level to avoid set_context method overheads
 
+    template = "radio_overview.html"
+
+    @cached_method (key = "RadioOverview-get_total_played_length", timeout = 60)
+    def get_total_played (self):
+        q = m.Song.active.extra (
+                    select = {"total_played_length" : "sum(song_length * times_played)",
+                              "total_times_played"  : "sum(times_played)"})
+        return list (q.values ("total_played_length", "total_times_played")) [0]
+
+    @cached_method (key = "RadioOverview-stats_by_status", timeout = 60)
+    def list_stats_by_status (self):
+        return self.__list_grouped_by (m.Song.objects, 'status')
+
+    @cached_method (key = "RadioOverview-votes_by_status", timeout = 60)
     def list_votes_stats (self):
+        return self.__list_grouped_by (m.Song.active, 'rating_votes', limit = 5)
+
+    @cached_method (key = "RadioOverview-source_stats", timeout = 60)
+    def list_source_stats (self):
+        type_by_id = {}
+        for type in m.SongType.objects.all():
+            type_by_id [type.id] = type
+
+        stats = self.__list_grouped_by (m.Song.active, 'songmetadata__type')
+        for stat in stats:
+            stat ['source'] = type_by_id [stat['songmetadata__type']].title
+
+        return stats
+
+    @cached_method (key = "RadioOverview-set_context", timeout = 60)
+    def set_context (self):
+        # Overview
+        stats_by_status = self.list_stats_by_status ()
+        total_songs = 0
+        total_length = 0
+        unlocked_songs = 0
+        unlocked_length = 0
+        status_dict = dict (m.Song.STATUS_CHOICES)
+        for stat in stats_by_status:
+            stat ['status'] = status_dict [stat ['status']]
+            total_songs += stat ['count']
+            total_length += stat ['total_playtime']
+            unlocked_songs += stat ['unlocked_count']
+            unlocked_length += stat ['unlocked_playtime']
+
+        # Result
+        return {'vote_stats'                : self.list_votes_stats (),
+                "stats_by_status"           : stats_by_status,
+                "source_stats"              : self.list_source_stats (),
+                'total_length'              : total_length,
+                'total_songs'               : total_songs,
+                'unlocked_length'           : unlocked_length,
+                'unlocked_songs'            : unlocked_songs,
+                'total_played'              : self.get_total_played ()}
+
+    def __list_grouped_by (self, qmanager, field, limit = None):
         # It is hard or impossible to write that with current django without issuing two queries
         # because django doesn't support expressions in annotations...
 
         def qfiltered (f = None):
-            q = m.Song.active
+            q = qmanager
             if f:
                 q = q.filter (f)
-            q = q.values ('rating_votes')
-            q = q.annotate (count = Count('rating_votes'), total_playtime = Sum('song_length'))
-            q = q.order_by ('rating_votes')
-            return q [:5]
+            q = q.values (field)
+            q = q.annotate (count = Count(field), total_playtime = Sum('song_length'))
+            q = q.order_by (field)
+            if limit:
+                return q [:limit]
+            else:
+                return q.all ()
 
         # Get total
-        by_votes = {}
+        by_field = {}
         stats = qfiltered ()
         for stat in stats:
-            by_votes [stat['rating_votes']] = stat
+            by_field [stat[field]] = stat
             stat ['unlocked_count'] = 0
-            stat ['unlocked_playtime'] = m.TimeDelta (0)
-            stat ['total_playtime'] = m.TimeDelta (seconds = stat ['total_playtime'])
+            stat ['unlocked_playtime'] = 0
 
         # Mix-in playable stats
         for pstat in qfiltered (m.Song.unlocked_condition()):
-            votes = pstat ['rating_votes']
-            if votes in by_votes:
-                stat = by_votes [votes]
+            fieldv = pstat [field]
+            if fieldv in by_field:
+                stat = by_field [fieldv]
                 stat ['unlocked_count'] = pstat ['count']
-                stat ['unlocked_playtime'] = m.TimeDelta (seconds = pstat ['total_playtime'])
+                stat ['unlocked_playtime'] = pstat ['total_playtime']
 
-        return stats
-
-    def set_cached_context (self):
-        # Result is supposed to be cached on page level
-        return {'vote_stats': self.list_votes_stats ()}
+        # Force evaluation, otherwise django's cache doesn't cache it at all! :E
+        return list (stats)
 
 
 class RadioStatus(WebView):
