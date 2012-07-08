@@ -1033,6 +1033,10 @@ class UsersOverview (WebView):
     def set_context (self):
         limit = 50
 
+        country_stats_q = m.User.objects.values ("userprofile__country")
+        country_stats_q = country_stats_q.annotate (count = Count("pk"))
+        country_stats_q = country_stats_q.order_by ('-count')
+
         by_votes_q = m.User.objects.values ("username", 'userprofile__country')
         by_votes_q = by_votes_q.annotate (count = Count("songvote"), avg = Avg('songvote__vote'))
         by_votes_q = by_votes_q.order_by ('-count')
@@ -1075,7 +1079,8 @@ class UsersOverview (WebView):
                 'by_comments_q'         : by_comments_q,
                 'by_posts_q'            : by_posts_q,
                 'by_tagging_q'          : by_tagging_q,
-                'by_uploads_q'          : by_uploads_q}
+                'by_uploads_q'          : by_uploads_q,
+                'country_stats_q'       : country_stats_q}
 
 
 class RadioOverview (WebView):

@@ -432,6 +432,6 @@ div.screenshot:hover {
 }
 
 #users_overview, #top_voters, #top_uploaders, #top_oneliners, #top_taggers, #top_requesters,
-#top_commentators, #top_posters {
+#top_commentators, #top_posters, #top_user_country {
     display: inline-block;
 }
