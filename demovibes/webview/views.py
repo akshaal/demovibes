@@ -1110,7 +1110,8 @@ class RadioOverview (WebView):
         for type in m.SongType.objects.all():
             type_by_id [type.id] = type
 
-        stats = self.__list_grouped_by (m.Song.active, 'songmetadata__type')
+        stats = self.__list_grouped_by (m.Song.active.filter (songmetadata__active = True),
+                                        'songmetadata__type')
         for stat in stats:
             stat ['source'] = type_by_id [stat['songmetadata__type']].title
 
