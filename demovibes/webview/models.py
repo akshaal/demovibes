@@ -253,7 +253,7 @@ alphalist = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n
 def get_startswith (s):
     """Return a character that is suitable for 'startswith' field of an entity."""
 
-    m = re.match ("^(\w).*$", s.strip(), re.U)
+    m = re.match ("^.*?(\w).*$", s.strip(), re.U)
     return m and m.group (1).lower () or "#"
 
 
