@@ -79,26 +79,42 @@ class ListByLetter(WebView):
 
     Model need to have "startswith" and letter var need to be "letter"
     """
+
     model = None
 
-    def get_objects(self):
+    def initialize (self):
+        self.__alphalist_cache_key = "ListByLetter-alphalist-" + self.model.__module__ + "." + self.model.__name__
+        alphalist = self.get_alphalist ()
+
+        letter = self.kwargs.get ("letter", False)
+
+        if letter and not letter in alphalist or letter == '-':
+            letter = '#'
+
+        self.letter = letter
+        self.context ['letter'] = letter
+        self.context ['al'] = alphalist
+
+    def get_objects (self):
         return self.model.objects.all()
 
-    def initialize(self):
-        letter = self.kwargs.get("letter", False)
-        if letter and not letter in m.alphalist or letter == '-':
-            letter = '#'
-        self.letter = letter
-        self.context['letter'] = letter
-        self.context['al'] = m.alphalist
+    def get_alphalist (self):
+        @cached_method (key = self.__alphalist_cache_key, timeout = 3)
+        def get ():
+            return map (lambda x: x['startswith'] == '#' and '-' or x['startswith'],
+                        self.model.objects.distinct().values ('startswith').order_by('startswith'))
+
+        return get ()
 
     def set_context(self):
         if self.model:
             if self.letter:
-                results = self.get_objects().filter(startswith=self.letter)
+                results = self.get_objects().filter (startswith = self.letter)
             else:
                 results = self.get_objects()
+
             return {'object_list': results }
+
         return {}
 
 class AjaxifyView(WebView):

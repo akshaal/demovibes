@@ -250,6 +250,13 @@ alphalist = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n
              'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
 
+def get_startswith (s):
+    """Return a character that is suitable for 'startswith' field of an entity."""
+
+    m = re.match ("^(\w).*$", s.strip(), re.U)
+    return m and m.group (1).lower () or "#"
+
+
 def int_rnd_val (cls = None):
     """Get next random integer comaptiable with a db."""
 
@@ -455,10 +462,7 @@ class Group(models.Model):
         ordering = ['name']
 
     def save(self, *args, **kwargs):
-        S = self.name[0].lower()
-        if not S in alphalist:
-            S = '#'
-        self.startswith = S
+        self.startswith = get_startswith (self.name)
         self.last_updated = datetime.datetime.now()
         return super(Group, self).save(*args, **kwargs)
 
@@ -804,11 +808,8 @@ class Label(models.Model):
     class Meta:
         ordering = ['name']
 
-    def save(self, *args, **kwargs):
-        S = self.name[0].lower()
-        if not S in alphalist:
-            S = '#'
-        self.startswith = S
+    def save (self, *args, **kwargs):
+        self.startswith = get_startswith (self.name)
         self.last_updated = datetime.datetime.now()
         return super(Label, self).save(*args, **kwargs)
 
@@ -876,11 +877,8 @@ class Artist (models.Model):
         ordering = ['handle']
 
     def save(self, *args, **kwargs):
-        S = self.handle[0].lower() #Stores the first character in the DB, for easier lookup
-        if not S in alphalist:
-                S = '#'
-        self.startswith = S
-        self.last_updated = datetime.datetime.now()
+        self.startswith = get_startswith (self.handle)
+        self.last_updated = datetime.datetime.now ()
         return super(Artist, self).save(*args, **kwargs)
 
     @models.permalink
@@ -995,10 +993,7 @@ class Screenshot(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        S = self.name[0].lower()
-        if not S in alphalist:
-            S = '#'
-        self.startswith = S
+        self.startswith = get_startswith (self.name)
         self.last_updated = datetime.datetime.now()
         return super(Screenshot, self).save(*args, **kwargs)
 
@@ -1552,10 +1547,7 @@ class Song(models.Model):
             self.loopfade_time = 0
 
         self.calc_votes()
-        S = self.title[0].lower()
-        if not S in alphalist:
-            S = '#'
-        self.startswith = S
+        self.startswith = get_startswith (self.title)
         return super(Song, self).save(*args, **kwargs)
 
 
@@ -1813,10 +1805,7 @@ class Compilation(models.Model):
         return "Not set"
 
     def save(self, *args, **kwargs):
-        S = self.name[0].lower() #Stores the first character in the DB, for easier lookup
-        if not S in alphalist:
-                S = '#'
-        self.startswith = S
+        self.startswith = get_startswith (self.name)
         return super(Compilation, self).save(*args, **kwargs)
 
     def __unicode__(self):
