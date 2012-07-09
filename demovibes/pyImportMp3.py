@@ -59,6 +59,8 @@ tags = None
 
 
 for opt, arg in opts:
+    arg = arg.decode ('utf-8')
+
     if opt in ("-h", "--help"):
         usage()
         sys.exit()
@@ -112,12 +114,12 @@ for artist in artists:
         A.append (A1[0])
     else:
         if create:
-            print "Can not find artist '%s'. Creating.." % artist
+            print "Can not find artist. Creating.."
             A1 = Artist(handle=artist)
             A1.save()
             A.append(A1)
         else:
-            print "Can not find artist '%s'. Exiting." % artist
+            print "Can not find artist. Exiting." % artist
             sys.exit(1)
 
 # Create song record
