@@ -1215,7 +1215,8 @@ class RadioStatus(WebView):
         return m.Song.objects.order_by('-num_favorited')
 
     def list_voted(self):
-        return m.Song.objects.filter(rating_votes__gt = 9).order_by('-rating')
+        limit = getattr(settings, "RADIO_STATUS_VOTED_MIN_VOTES", 1)
+        return m.Song.objects.filter(rating_votes__gt = limit - 1).order_by('-rating')
 
     def list_leastvotes(self):
         return m.Song.objects.filter(status="A").exclude(locked_until__gte=datetime.datetime.now()).order_by('rating_votes', '?')[:100]

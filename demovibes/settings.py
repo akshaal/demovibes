@@ -312,6 +312,7 @@ PLAY_JINGLES = False
 # 5 : 1}
 
 #DJ_RANDOM_MIN_VOTES = 1
+RADIO_STATUS_VOTED_MIN_VOTES = 9
 
 # How many objects per page:
 PAGINATE = 30
