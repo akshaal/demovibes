@@ -1103,7 +1103,7 @@ class UsersOverview (WebView):
         by_tagging_q = by_tagging_q [:limit]
 
         by_requester_q = m.Queue.objects.values ("requested_by__username", 'requested_by__userprofile__country')
-        by_requester_q = by_requester_q.annotate (count = Count("pk"))
+        by_requester_q = by_requester_q.annotate (count = Count("pk"), avg = Avg ("song__rating"))
         by_requester_q = by_requester_q.order_by ('-count')
         by_requester_q = by_requester_q [:limit]
 
