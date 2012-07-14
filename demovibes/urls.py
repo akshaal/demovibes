@@ -6,7 +6,6 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
-    # Example:
     (r'^$', 'django.views.generic.simple.redirect_to', {'url': '/demovibes/'}),
     (r'^accounts/profile/$', 'django.views.generic.simple.redirect_to', {'url': '/demovibes/'}),
     (r'^accounts/logout/$', 'webview.views.log_out'),
