@@ -1213,7 +1213,7 @@ class Song(models.Model):
     status = models.CharField(max_length = 1, choices = STATUS_CHOICES, default = 'A', db_index=True)
     times_played = models.IntegerField(null = True, default = 0)
     title = models.CharField(verbose_name="* Song Name", help_text="The name of this song, as it should appear in the database", max_length=80, db_index = True)
-    uploader = models.ForeignKey(User,  null = True, blank = True)
+    uploader = models.ForeignKey(User, null = True, blank = True)
     pouetlink = models.CharField(max_length=200, blank = True)
     pouetss = models.CharField(max_length=100, blank = True)
     pouetgroup = models.CharField(max_length=100, blank = True)
@@ -1540,7 +1540,6 @@ class Song(models.Model):
     def reset_pouetinfo(self):
         self.pouetss = ""
         self.pouetlink = ""
-
 
     def get_pouet_download(self):
         """

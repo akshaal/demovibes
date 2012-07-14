@@ -28,7 +28,7 @@ from django.core.cache import cache
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth import authenticate, login
 from django.db import DatabaseError
-from django.db.models import Count, Sum, Avg
+from django.db.models import Count, Sum, Avg, Max
 from django.db.models import Q as DQ
 
 import logging
@@ -1247,8 +1247,15 @@ class RadioStatus(WebView):
         limit = getattr(settings, "RADIO_STATUS_VOTED_MIN_VOTES", 1)
         return m.Song.objects.filter(rating_votes__gt = limit - 1).order_by('-rating')
 
-    def list_leastvotes(self):
-        return m.Song.objects.filter(status="A").exclude(locked_until__gte=datetime.datetime.now()).order_by('rating_votes', '?')[:100]
+    def list_leastvotes (self):
+        return m.Song.objects.filter (m.Song.unlocked_condition ()).order_by ('rating_votes', '?')[:100]
+
+    def list_forgotten (self):
+        q = m.Song.active.filter (m.Song.unlocked_condition ())
+        q = q.annotate (last_requested = Max("queue__requested"))
+        q = q.order_by ('last_requested')
+        q = q[:100]
+        return q
 
     def list_random(self):
         max_id = m.Song.objects.order_by('-id')[0].id
@@ -1273,7 +1280,7 @@ class RadioStatus(WebView):
         return m.Song.objects.order_by('-rating_votes')
 
     def list_queued2(self):
-        return m.Song.objects.filter(status="A").exclude(locked_until__gte=datetime.datetime.now()).order_by('times_played', 'locked_until')
+        return m.Song.objects.filter(m.Song.unlocked_condition()).order_by('times_played', 'locked_until')
 
     def list_queued(self):
         return m.Song.objects.filter(status="A").order_by('-times_played')
@@ -1289,6 +1296,11 @@ class RadioStatus(WebView):
                            "rating_votes",
                            "# Votes",
                            self.list_leastvotes),
+
+            'forgotten': ("The least recently played songs.",
+                          "times_played",
+                          "# Played",
+                          self.list_forgotten),
 
             'favorites': ("Songs which appear on more users favourites lists.",
                           "num_favorited",
