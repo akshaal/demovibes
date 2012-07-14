@@ -34,8 +34,8 @@ class AjaxView(MyBaseView):
     basetemplate = "webview/js/"
 
 
-@cache_page (60*60*24)
-@cache_control (max_age = 3600*24)
+@cache_page (60 * 60 * 24)
+@cache_control (max_age = 3600 * 24)
 def smileys (request):
     filtered = []
     seen = set ()
@@ -48,6 +48,17 @@ def smileys (request):
 
     s = simplejson.dumps (filtered)
     return HttpResponse (s, "application/json")
+
+
+@cache_page (60 * 60 * 24)
+@cache_control (max_age = 3600 * 24)
+def countrybox (request):
+    alpha2list = country_by_code2.keys ()
+    alpha2list.sort (lambda a, b: cmp (country_by_code2[a].name, country_by_code2[b].name))
+
+    return j2shim.r2r ('webview/t/countrybox.html',
+                       {'alpha2list'   : alpha2list},
+                       request)
 
 
 class LicenseView (AjaxView):

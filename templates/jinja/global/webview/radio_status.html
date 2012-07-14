@@ -1,6 +1,7 @@
 {% extends "base/base.html" %}
 
 {% block main %}
+  {# ================================= Statistics ============================ #}
   <h2>
     <img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />{{ gettext("Avaliable Statistics") }}
   </h2>
@@ -11,5 +12,13 @@
   {% for word, vals in keys.items() %}
     <p><a href="{{ url("dv-stats", word) }}">{{ word|capitalize }}</a> - {{ vals[0] }}</p>
   {% endfor %}
-{% endblock %}
     
+  {# ================================= Help us ============================ #}
+  <h2>
+    <img class="icon_header" src="{{ STATIC_URL }}statistics.png" alt="" />{{ gettext("Help us") }}
+  </h2>
+  <p><a href="{{ url("dv-helpus-artist") }}">{{ gettext("Artists") }}</a> - {{ gettext("Artists with missing or incorrect information...") }}</p>
+  <p><a href="{{ url("dv-helpus-comp") }}">{{ gettext("Compilations") }}</a> - {{ gettext("Compilations without songs, without cover image...") }}</p>
+  <p><a href="{{ url("dv-helpus-song") }}">{{ gettext("Songs") }}</a> - {{ gettext("Song with missing or incorrect information, problems...") }}</p>
+  <p><a href="{{ url("dv-helpus-screenshot") }}">{{ gettext("Images") }}</a> - {{ gettext("Broken images") }}</p>
+{% endblock %}

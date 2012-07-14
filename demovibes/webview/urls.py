@@ -132,10 +132,18 @@ urlpatterns = patterns('',
     url(r'^groups/(?P<letter>.)/$',               views.ListGroups(), name = "dv-groups_letter"),
     url(r'^group/(?P<object_id>\d+)/$',            'django.views.generic.list_detail.object_detail',       group_a_dict, name = "dv-group"),
 
-    url(r'^statistics/$',                           views.RadioStatus(), name = "dv-stats-index"),
-    url(r'^statistics/overview/radio/$',            views.RadioOverview(), name = "dv-radio-overview"),
-    url(r'^statistics/overview/users/$',            views.UsersOverview(), name = "dv-users-overview"),
-    url(r'^statistics/(?P<stattype>\w+)/$',         views.RadioStatus(), name = "dv-stats"),
+    url(r'^statistics/$',                                   views.RadioStatus(), name = "dv-stats-index"),
+    url(r'^statistics/overview/radio/$',                    views.RadioOverview(), name = "dv-radio-overview"),
+    url(r'^statistics/overview/users/$',                    views.UsersOverview(), name = "dv-users-overview"),
+    url(r'^statistics/helpus/artisthelp/$',                 views.HelpusWithArtists(), name = "dv-helpus-artist"),
+    url(r'^statistics/helpus/artisthelp/(?P<letter>.)/$',   views.HelpusWithArtists(), name = "dv-helpus-artist_letter"),
+    url(r'^statistics/helpus/songhelp/$',                   views.HelpusWithSongs(), name = "dv-helpus-song"),
+    url(r'^statistics/helpus/songhelp/(?P<letter>.)/$',     views.HelpusWithSongs(), name = "dv-helpus-song_letter"),
+    url(r'^statistics/helpus/comphelp/$',                   views.HelpusWithComps(), name = "dv-helpus-comp"),
+    url(r'^statistics/helpus/comphelp/(?P<letter>.)/$',     views.HelpusWithComps(), name = "dv-helpus-comp_letter"),
+    url(r'^statistics/helpus/sshelp/$',                     views.HelpusWithScreenshots(), name = "dv-helpus-screenshot"),
+    url(r'^statistics/helpus/sshelp/(?P<letter>.)/$',       views.HelpusWithScreenshots(), name = "dv-helpus-screenshot_letter"),
+    url(r'^statistics/(?P<stattype>\w+)/$',                 views.RadioStatus(), name = "dv-stats"),
 
     # Updated Information, such as groups, labels etc.
     url(r'^updates/$',                  'demovibes.webview.views.showRecentChanges', name = "dv-updates"),
@@ -149,10 +157,10 @@ urlpatterns = patterns('',
     url(r'^song/vote/$',          views.VoteSong(), name = "dv-formvote"),
 
     # Add support for displaying all compilations
-    url(r'^compilations/$',                             views.ListComilations(), name = "dv-compilations"),
-    url(r'^compilations/new/$',                     views.AddCompilation(), name = "dv-newcomp"),
-    url(r'^compilations/(?P<letter>.)/$',               views.ListComilations(), name = "dv-compilations_letter"),
-    url(r'^compilation/(?P<compilation_id>\d+)/screenshot/$',    views.CompilationAddScreenshot(), name = "dv-add_comp_screenshot"),
+    url(r'^compilations/$',                                     views.ListComilations(), name = "dv-compilations"),
+    url(r'^compilations/new/$',                                 views.AddCompilation(), name = "dv-newcomp"),
+    url(r'^compilations/(?P<letter>.)/$',                       views.ListComilations(), name = "dv-compilations_letter"),
+    url(r'^compilation/(?P<compilation_id>\d+)/screenshot/$',   views.CompilationAddScreenshot(), name = "dv-add_comp_screenshot"),
 
     url(r'^user/$',                                views.MyProfile(), name = "dv-my_profile"),
     url(r'^online/$',                              'demovibes.webview.views.users_online', name = "dv-users_online"),
@@ -213,5 +221,4 @@ urlpatterns = patterns('',
 
     # Statistics & Cache stuff
     url(r'^status/cache/$',                    'demovibes.webview.views.memcached_status', name = "dv-memcached"), # Show memcached status
-
 )

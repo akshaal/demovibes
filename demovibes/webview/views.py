@@ -29,6 +29,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth import authenticate, login
 from django.db import DatabaseError
 from django.db.models import Count, Sum, Avg
+from django.db.models import Q as DQ
 
 import logging
 import datetime
@@ -81,9 +82,18 @@ class ListByLetter(WebView):
     """
 
     model = None
+    alphalist_cache_prefix = "ListByLetter-alphalist-"
+
+    desc_function = None
+
+    # Support for that should be included in the template
+    list_title = "List"
+    letter_url_name = ""
+    all_url_name = ""
 
     def initialize (self):
-        self.__alphalist_cache_key = "ListByLetter-alphalist-" + self.model.__module__ + "." + self.model.__name__
+        query_hexdigest = hashlib.md5 (str(self.get_objects ().query)).hexdigest()
+        self.__alphalist_cache_key = self.alphalist_cache_prefix + query_hexdigest
         alphalist = self.get_alphalist ()
 
         letter = self.kwargs.get ("letter", False)
@@ -95,6 +105,9 @@ class ListByLetter(WebView):
         self.context ['letter'] = letter
         self.context ['al'] = alphalist
 
+    def get_list_title (self):
+        return self.list_title
+
     def get_objects (self):
         return self.model.objects.all()
 
@@ -102,7 +115,7 @@ class ListByLetter(WebView):
         @cached_method (key = self.__alphalist_cache_key, timeout = 3)
         def get ():
             return map (lambda x: x['startswith'] == '#' and '-' or x['startswith'],
-                        self.model.objects.distinct().values ('startswith').order_by('startswith'))
+                        self.get_objects ().distinct().values ('startswith').order_by('startswith'))
 
         return get ()
 
@@ -113,7 +126,11 @@ class ListByLetter(WebView):
             else:
                 results = self.get_objects()
 
-            return {'object_list': results }
+            return {'object_list'       : results,
+                    'list_title'        : self.get_list_title (),
+                    'letter_url_name'   : self.letter_url_name,
+                    'all_url_name'      : self.all_url_name,
+                    'desc_function'     : self.desc_function}
 
         return {}
 
@@ -477,6 +494,9 @@ def show_approvals(request):
 class ListArtists(ListByLetter):
     template = "artist_list.html"
     model = m.Artist
+    list_title = "Complete Artist List"
+    letter_url_name = "dv-artists_letter"
+    all_url_name = "dv-artists"
 
 class ListGroups(ListByLetter):
     template = "group_list.html"
@@ -489,14 +509,23 @@ class ListLabels(ListByLetter):
 class ListComilations(ListByLetter):
     template = "compilation_list.html"
     model = m.Compilation
+    list_title = "Complete Compilation / Album / Production List"
+    letter_url_name = "dv-compilations_letter"
+    all_url_name = "dv-compilations"
 
 class ListSongs(ListByLetter):
     template = "song_list.html"
     model = m.Song
+    list_title = "List Of Songs"
+    letter_url_name = "dv-songs_letter"
+    all_url_name = "dv-songs"
 
 class ListScreenshots(ListByLetter):
     template = "screenshot_list.html"
     model = m.Screenshot
+    list_title = "Gallery Of Images"
+    letter_url_name = "dv-screenshots_letter"
+    all_url_name = "dv-screenshots"
 
     def get_objects(self):
         return self.model.objects.filter(status="A")
@@ -1300,6 +1329,168 @@ class RadioStatus(WebView):
 
         self.template = "radio_status.html"
         return {'keys' : self.stats}
+
+
+class HelpusWithArtists (ListArtists):
+    list_title = "Artists with incorrect/missing information"
+    letter_url_name = "dv-helpus-artist_letter"
+    all_url_name = "dv-helpus-artist"
+
+    condition = ~DQ (home_country__in = m.country_codes2, status = 'A')
+    condition |= DQ (artist_pic = '', status = 'A')
+
+    def get_objects (self):
+        return self.model.objects.filter (self.condition)
+
+    def desc_function (self, artist):
+        """Describe what is wrong with an artist."""
+
+        problems = []
+
+        if artist.status == 'A':
+            country_lc = artist.home_country.lower()
+            if country_lc == "":
+                problems.append (_("no country"))
+            elif country_lc not in m.country_codes2:
+                problems.append (_("unknown country (" + artist.home_country + ")"))
+
+            if artist.artist_pic == "":
+                problems.append (_("no picture"))
+
+        if problems:
+            problems = ", ".join (problems)
+            problems = problems[0].upper() + problems[1:]
+            return " - " + problems + "."
+        else:
+            # WTF? why are we here then?
+            return ""
+
+
+class HelpusWithSongs (ListSongs):
+    list_title = "Songs with problems"
+    letter_url_name = "dv-helpus-song_letter"
+    all_url_name = "dv-helpus-song"
+
+    # Kaput
+    condition = DQ (status = 'K')
+
+    # Active but no compilation
+    condition |= DQ (status = 'A',
+                     compilationsonglist = None,
+                     songmetadata__active = True,
+                     songmetadata__type__compilation_expected = True)
+
+    # No source (song type)
+    condition |= DQ (status = 'A',
+                     songmetadata__type = None,
+                     songmetadata__active = True)
+
+    def get_objects (self):
+        q = self.model.objects.filter (self.condition)
+        q = q.annotate (comps_count = Count("compilationsonglist__pk"))
+
+        # I hate that but until it is not django 1.4 we can't do better
+        q = q.extra (select = {'compilation_expected' : '`webview_songtype`.`compilation_expected`',
+                               'songtype'             : '`webview_songtype`.`id`'})
+
+        return q
+
+    def desc_function (self, song):
+        """Describe what is wrong with an artist."""
+
+        problems = []
+
+        if song.status == 'K':
+            problems.append ("bad status")
+
+        if song.compilation_expected and song.comps_count == 0 and song.status == 'A':
+            problems.append ("no compilations")
+
+        if song.status == 'A' and song.songtype == None:
+            problems.append ("no source")
+
+        if problems:
+            problems = ", ".join (problems)
+            problems = problems[0].upper() + problems[1:]
+            return problems
+        else:
+            # WTF? why are we here then?
+            return ""
+
+
+class HelpusWithComps (ListComilations):
+    list_title = "Compilations with problems"
+    letter_url_name = "dv-helpus-comp_letter"
+    all_url_name = "dv-helpus-comp"
+
+    def get_objects (self):
+        # That is the only way.. ;( Django's contenttype magic inserts content_type_id=29 into where clause
+        # making it impossible to filter screenshots=None, so we have to use inner join
+        active_and_with_image_q = self.model.objects.filter (status = 'A', screenshots__image__status = 'A')
+
+        # Active and without an image
+        condition = DQ (status = 'A') & ~DQ (pk__in = active_and_with_image_q)
+
+        # Active and no songs (messed up via admin interface or songs are deleted...)
+        condition |= DQ (status = 'A', songs = None)
+
+        q = self.model.objects.filter (condition)
+        q = q.annotate (screenshots_count = Count("screenshots"),
+                        songs_count = Count ("songs"))
+
+        return q
+
+    def desc_function (self, comp):
+        """Describe what is wrong with the compilation."""
+
+        problems = []
+
+        if comp.status == 'A':
+            if comp.screenshots_count == 0:
+                problems.append (_("no cover image"))
+
+            if comp.songs_count == 0:
+                problems.append (_("no songs"))
+
+        if problems:
+            problems = ", ".join (problems)
+            problems = problems[0].upper() + problems[1:]
+            return " - " + problems + "."
+        else:
+            # WTF? why are we here then?
+            return ""
+
+
+class HelpusWithScreenshots (ListScreenshots):
+    list_title = "Images with problems"
+    letter_url_name = "dv-helpus-screenshot_letter"
+    all_url_name = "dv-helpus-screenshot"
+
+    # Connected to nothing
+    condition = DQ (status = 'A', screenshotobjectlink = None)
+
+    def get_objects (self):
+        q = self.model.objects.filter (self.condition)
+        q = q.annotate (slink_count = Count("screenshotobjectlink"))
+
+        return q
+
+    def desc_function (self, scr):
+        """Describe what is wrong with the screenshot."""
+
+        problems = []
+
+        if scr.status == 'A':
+            if scr.slink_count == 0:
+                problems.append (_("connected to nothing"))
+
+        if problems:
+            problems = ", ".join (problems)
+            problems = problems[0].upper() + problems[1:]
+            return " - " + problems + "."
+        else:
+            # WTF? why are we here then?
+            return ""
 
 
 class tagCloud(WebView):

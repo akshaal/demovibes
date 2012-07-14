@@ -13,6 +13,8 @@ from django.conf import settings
 from django.core.mail import EmailMessage
 import dscan
 import logging
+import pycountry
+
 import xml.dom.minidom, urllib # Needed for XML processing
 from django.core.cache import cache
 from django.template.defaultfilters import striptags
@@ -34,6 +36,20 @@ import tagging
 import time, hashlib
 
 import random
+
+
+# South needs to know how to introspect our custom model fields
+from south.modelsinspector import add_introspection_rules
+add_introspection_rules ([], ["^webview\.models\.CountryField$"])
+
+
+class CountryField (models.CharField):
+    """Country field. Which is supposed to be rendered with countrybox support."""
+
+    def formfield (self, *args, **kwargs):
+        ff = super (CountryField, self).formfield (*args, **kwargs)
+        ff.widget.attrs ['class'] = 'country-alpha2-code-input'
+        return ff
 
 
 class IntWithComment (int):
@@ -87,6 +103,9 @@ CHEROKEE_LIMIT = getattr(settings, "CHEROKEE_SECRET_DOWNLOAD_LIMIT", "")
 CHEROKEE_LIMIT_URL = getattr(settings, "CHEROKEE_SECRET_DOWNLOAD_LIMIT_URL", "")
 
 SELFVOTE_DISABLED = getattr(settings, "SONG_SELFVOTE_DISABLED", False)
+
+country_by_code2 = dict ([(country.alpha2.lower(), country) for country in pycountry.countries])
+country_codes2 = country_by_code2.keys ()
 
 
 def get_now_playing_song(create_new=False):
@@ -596,7 +615,7 @@ class Userprofile(models.Model):
 
     aol_id = models.CharField(blank = True, max_length = 40, verbose_name = "AOL IM", help_text="AOL IM ID, for people to contact you (optional)")
     avatar = models.ImageField(upload_to = 'media/avatars', blank = True, null = True)
-    country = models.CharField(blank = True, max_length = 10, verbose_name = "Country code")
+    country = CountryField (blank = True, max_length = 10, verbose_name = "Country code")
     custom_css = models.URLField(blank=True)
     email_on_artist_add = models.BooleanField(default=True, verbose_name = "Send email on artist approval")
     email_on_artist_comment = models.BooleanField(default = True, verbose_name="Send email on artist comments")
@@ -836,7 +855,7 @@ class Artist (models.Model):
     groups = models.ManyToManyField(Group, null = True, blank = True, help_text="Select any known groups this artist is a member of.")
     handle = models.CharField(max_length=64, unique = True, db_index = True, verbose_name="* Handle", help_text="Artist handle/nickname. If no handle is used, place their real name here (and not in the above real name position) to avoid duplication")
     hol_id = models.IntegerField(blank=True, null = True, verbose_name="H.O.L. ID", help_text="Hall of Light Artist ID number (Amiga) - See http://hol.abime.net")
-    home_country = models.CharField(blank = True, max_length = 10, verbose_name = "Country Code", help_text="Standard country code, such as gb, us, ru, se etc.")
+    home_country = CountryField (blank = True, max_length = 10, verbose_name = "Country Code", help_text="Standard country code, such as gb, us, ru, se etc.")
     home_location = models.CharField(blank = True, max_length=40, verbose_name="Location", help_text="Hometown location, if known.")
     info = models.TextField(blank = True, help_text="Additional artist information. No HTML allowed.")
     is_deceased = models.BooleanField(default=False, verbose_name = "Deceased?", help_text="Has this artist passed away? Check if this has happened.")
@@ -911,6 +930,11 @@ class SongType (models.Model):
     description = models.TextField()
     symbol = models.ImageField(upload_to = 'media/songsource/symbol', blank = True, null = True)
     image = models.ImageField(upload_to = 'media/songsource/image', blank = True, null = True)
+
+    compilation_expected = models.BooleanField (
+                                default = False,
+                                verbose_name = "Compilation expected?",
+                                help_text = "Check if song of this type is supposed to be included in a compilation.")
 
     def __unicode__(self):
         return self.title
@@ -2038,7 +2062,7 @@ class RadioStream(models.Model):
     name = models.CharField(max_length=120, verbose_name="Stream Name", help_text="Name of the stream, as you want it to appear on the site")
     description = models.TextField(blank=True)
     user = models.ForeignKey(User, null = True, help_text="User hosting the stream")
-    country_code = models.CharField(max_length=10, verbose_name="Country Code", help_text="Lower-case country code of the server location")
+    country_code = CountryField (max_length=10, verbose_name="Country Code", help_text="Lower-case country code of the server location")
     bitrate = models.IntegerField()
     STREAMS = (
         ('M', 'MP3'),

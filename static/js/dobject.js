@@ -78,7 +78,7 @@ function updateVotes(data) {
 function add_smileys(div, input) {
     div.empty();
     div.html("<div class='smileys_loading'>Loading..</div>");
-    $.get("/demovibes/ajax/smileys/",function (data) {
+    $.get (ajaxurl + "/smileys/",function (data) {
         div.empty();
         $(data).each(function (i, elem) {
             var sign = elem[0];

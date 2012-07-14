@@ -10,7 +10,7 @@
             <th>{{ gettext("User") }}</th>
             <th>{{ gettext(heading) }}</th>
         </tr>
-        
+
         {% for stat in stats_list if stat['count'] != 0 %}
             <tr class="{{ loop.cycle('row1', 'row2') }}">
                 <td>
@@ -24,7 +24,7 @@
         {% endfor %}
     </table>
 {% endmacro %}
-    
+
 {% block main %}
     {% cache 86400 "users_overview_html" %}
         <div id="users_overview">
@@ -36,11 +36,11 @@
                 </h2>
                 <table class="userstatlist statistics">
                     <tr>
-                        <th>{{ gettext("User") }}</th>
-                        <th>{{ gettext("Votes") }}</th>
-                        <th>{{ gettext("Average vote") }}</th>
+                        <th>{{ gettext("User") }}</th>
+                        <th>{{ gettext("Votes") }}</th>
+                        <th>{{ gettext("Average vote") }}</th>
                     </tr>
-                    
+
                     {% for stat in by_votes_q if stat['count'] != 0 %}
                         <tr class="{{ loop.cycle('row1', 'row2') }}">
                             <td>
@@ -55,7 +55,7 @@
                     {% endfor %}
                 </table>
             </div>
-            
+
             {# =============== Top uploaders =============== #}
             <div id="top_uploaders">
                 <h2>
@@ -64,7 +64,7 @@
                 </h2>
                 {{ list_stats(by_uploads_q, 'Uploads', user_path = ['uploaded_by']) }}
             </div>
-            
+
             {# =============== Top oneliners =============== #}
             <div id="top_oneliners">
                 <h2>
@@ -73,7 +73,7 @@
                 </h2>
                 {{ list_stats(by_oneliner_q, 'Spoken') }}
             </div>
-            
+
             {# =============== Top tag setters =============== #}
             <div id="top_taggers">
                 <h2>
@@ -82,7 +82,7 @@
                 </h2>
                 {{ list_stats(by_tagging_q, 'Changes', user_path = ['user']) }}
             </div>
-            
+
             {# =============== Top requester =============== #}
             <div id="top_requesters">
                 <h2>
@@ -91,7 +91,7 @@
                 </h2>
                 {{ list_stats(by_requester_q, 'Requests', user_path = ['requested_by']) }}
             </div>
-            
+
             {# =============== Top posters =============== #}
             <div id="top_posters">
                 <h2>
@@ -100,7 +100,7 @@
                 </h2>
                 {{ list_stats(by_posts_q, 'Posts', user_path = ['author']) }}
             </div>
-            
+
             {# =============== Top commentators =============== #}
             <div id="top_commentators">
                 <h2>
@@ -109,7 +109,7 @@
                 </h2>
                 {{ list_stats(by_comments_q, 'Comments', user_path = ['user']) }}
             </div>
-           
+
             {# =============== Top country =============== #}
             <div id="top_user_country">
                 <h2>
@@ -118,16 +118,16 @@
                 </h2>
                 <table class="usercountrystatlist statistics">
                     <tr>
-                        <th>{{ gettext("Country") }}</th>
-                        <th>{{ gettext("Users") }}</th>
+                        <th>{{ gettext("Country") }}</th>
+                        <th>{{ gettext("Users") }}</th>
                     </tr>
-                    
+
                     {% for stat in country_stats_q if stat['count'] != 0 %}
                         <tr class="{{ loop.cycle('row1', 'row2') }}">
                             <td>
                                 <span>
                                     {{ dv.flag(stat['userprofile__country']) }}
-                                    {{ stat['userprofile__country']|e }}
+                                    {{ dv.countryname (stat['userprofile__country']) }}
                                 </span>
                             </td>
                             <td>{{ stat['count'] }}</td>

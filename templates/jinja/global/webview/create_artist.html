@@ -1,5 +1,10 @@
 {% extends "base/base.html" %}
 
+{% block headblock %}
+    <link rel="stylesheet" href="{{ STATIC_URL }}themes/countrybox.css" type="text/css" />
+    <script src="{{ STATIC_URL }}js/countrybox.js"></script>
+{% endblock %}
+
 {% block title %}{{ gettext("Create New Artist") }}{% endblock %}
 
 {% block main %}

@@ -124,6 +124,7 @@ class CreateArtistForm(forms.ModelForm):
 
         return self.cleaned_data['artist_pic']
 
+
 class CreateSessionForm(forms.Form):
     description = forms.CharField(required=False, label = "Description")
     time = forms.DateTimeField(input_formats=['%Y-%m-%d %H:%M'], label="Play time", help_text = "Format: YYYY-mm-dd HH:HM")

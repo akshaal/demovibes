@@ -81,7 +81,6 @@ SITE_ID = 1
 
 ACCOUNT_ACTIVATION_DAYS = 7
 
-
 ## Notifications
 
 NOTIFY_NEW_FORUM_POST = False

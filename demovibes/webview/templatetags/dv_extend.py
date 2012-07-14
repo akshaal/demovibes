@@ -15,6 +15,7 @@ import os.path, random
 
 import j2shim as js
 from jinja2 import contextfunction
+from jinja2 import escape
 
 STATIC = settings.MEDIA_URL
 
@@ -865,18 +866,38 @@ def bb_song(hit):
 
     return mu
 
-def get_flag_path(flag):
+def countryname (code):
+    flag = code.encode('ascii', 'ignore').lower()
+
+    if not flag.isalnum():
+        flag = ""
+
+    country = country_by_code2.get (flag, None)
+    if country:
+        return country.name + " (" + flag + ")"
+
+    return escape (flag)
+
+
+def get_flag_path(flag, extra_title = ""):
     flag = flag.encode('ascii', 'ignore').lower()
 
     if not flag.isalnum():
         flag = ""
 
+    title_e = countryname (flag)
+    if extra_title:
+        if title_e:
+            title_e += ", " + escape (extra_title)
+        else:
+            title_e = escape (extra_title)
+
     if flag and os.path.isfile(os.path.join(settings.DOCUMENT_ROOT, "flags", "%s.png" % flag)):
-        return u"<img src='%sflags/%s.png' class='countryflag' alt='flag' title='%s' />" % (STATIC, flag, flag)
+        return u"<img src='%sflags/%s.png' class='countryflag' alt='flag' title='%s' />" % (STATIC, flag, title_e)
 
     # No flag image found, so default to Necta flag
     DEFAULT_FLAG = getattr(settings, "DEFAULT_FLAG", "nectaflag")
-    return u"<img src='%sflags/%s.png' class='countryflag' title='flag' />" % (STATIC, DEFAULT_FLAG)
+    return u"<img src='%sflags/%s.png' class='countryflag' title='%s' />" % (STATIC, DEFAULT_FLAG, title_e)
 
 def bb_flag(hit):
     """
@@ -1285,13 +1306,13 @@ def smileys(value):
     return value
 
 @register.filter
-def flag(value):
+def flag(value, extra_title = None):
     """
     Shows a flag instead of 2 letter country code. If the flag is invalid, a nectaflag is
     Used. Flag was created for me by sark76 (Mark Huther). AAK
     """
     flag = value.lower().encode('ascii', 'ignore')
-    return get_flag_path(flag)
+    return get_flag_path(flag, extra_title = extra_title)
 
 @register.filter
 def getattrs (obj, args):

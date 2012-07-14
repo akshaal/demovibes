@@ -13,8 +13,14 @@
 <table>
 <tr>
 <td class="artist_details">
-    {% if object.artist_pic %}<img class="artist_logo" src="{{ object.artist_pic.url }}" title="{{ object.handle|e }}'s Picture" />{% else %}<img class="artist_logo" src="{{ STATIC_URL }}no_artist_pic.png" alt="No Picture"/>{% endif %}
+    {% if object.artist_pic %}
+        <img class="artist_logo" src="{{ object.artist_pic.url }}" title="{{ object.handle|e }}'s Picture" />
+    {% else %}
+        <img class="artist_logo" src="{{ STATIC_URL }}no_artist_pic.png" alt="No Picture"/>
+    {% endif %}
+        
     <br /><img src="{{ STATIC_URL }}spacer.gif" /><br />
+    
     {% if object.wiki_link %}
      <a href="{{ object.wiki_link|e }}" target="_blank"><img src="{{ STATIC_URL }}wiki-icon.png" title="{{ object.handle|e }} on Wikipedia" /></a>{% endif %}
     {% if object.hol_id %}<a href="http://hol.abime.net/hol_search.php?N_ref_artist={{ object.hol_id }}" target="_blank"><img src="{{ STATIC_URL }}hol-icon.png" title="{{ object.handle|e }} at Hall of Light" /></a>{% endif %}
