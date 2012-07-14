@@ -7,7 +7,6 @@
         {% block earlyheadblock %}{% endblock %}
         <link rel="stylesheet" href="{{ STATIC_URL }}themes/base.css?9" type="text/css" />
         <link rel="stylesheet" href="{{ STATIC_URL }}themes/jquery.qtip.min.css" type="text/css" />
-        <link rel="stylesheet" href="{{ dv.user_css(user)|e }}" type="text/css" />
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js" type="text/javascript"></script>
         <script src="{{ STATIC_URL }}js/dutils.js?9" type="text/JavaScript"></script>
         <script src="{{ STATIC_URL }}js/dobject.js?7" type="text/JavaScript"></script>
@@ -20,6 +19,7 @@
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
         {% include "base/extra_headers.html" %}
         {% block headblock %}{% endblock %}
+        <link rel="stylesheet" href="{{ dv.user_css(user)|e }}" type="text/css" />
     </head>
 
     <body {% block bodyid %}id="site"{% endblock %} onload="ajaxmonitor({{ dv.ajaxevent() }});" onunload="ajaxmonitorabort();">
