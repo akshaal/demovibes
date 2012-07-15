@@ -1416,7 +1416,7 @@ bbdata_oneliner = [
 
         # For those who want a bit extra pazazz, we can specify a HTML compliant
         # Colour code in the form of #00FF00 to be used. Handy for text effects.
-        (r'\[color=#([0-9A-Fa-f]{6})\](.+?)\[/color\]', r'<span style="color:"\1;">\2</span>'),
+        (r'\[color=(#[0-9A-Fa-f]{6})\](.+?)\[/color\]', r'<span style="color:\1;">\2</span>'),
 
         # Video Linking Tags
         (r'\[yt\](.+?)\[/yt\]', bb_youtube_ol),
@@ -1442,7 +1442,7 @@ bbdata_oneliner = [
         (r'\[label\](.+?)\[/label\]', bb_labelname),
         (r'\[platform\](\d+?)\[/platform\]', bb_platform),
         (r'\[platform\](.+?)\[/platform\]', bb_platformname),
-    (r'\[faq\](\d+?)\[/faq\]', bb_faq),
+        (r'\[faq\](\d+?)\[/faq\]', bb_faq),
       ]
 
 bbdata_full = [
@@ -1507,7 +1507,7 @@ bbdata_full = [
         (r'\[label\](.+?)\[/label\]', bb_labelname),
         (r'\[platform\](\d+?)\[/platform\]', bb_platform),
         (r'\[platform\](.+?)\[/platform\]', bb_platformname),
-    (r'\[faq\](\d+?)\[/faq\]', bb_faq),
+        (r'\[faq\](\d+?)\[/faq\]', bb_faq),
 
         # Experimental BBCode tags
         (r'\[youtube\](.+?)\[/youtube\]', bb_youtube),
