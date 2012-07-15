@@ -561,7 +561,20 @@ class ThemeList(WebView):
     template = "themes_list.html"
 
     def get_objects(self):
-        return m.Theme.objects.filter(active=True)
+        q = m.Theme.objects.filter (active=True)
+        q = q.annotate (user_count = Count("userprofile"))
+
+        # Add user who didn't care to select a theme
+        themeless = m.Userprofile.objects.filter (theme = None).count ()
+        if themeless:
+            default_theme = m.Theme.objects.all().order_by("-default")
+            if default_theme:
+                default_theme = default_theme[0]
+                for t in q:
+                    if t.id == default_theme.id:
+                        t.user_count += themeless
+
+        return q
 
     def POST(self):
         id = int(self.request.POST.get("theme_id"))
