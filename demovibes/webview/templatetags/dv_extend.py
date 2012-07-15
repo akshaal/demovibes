@@ -1481,7 +1481,7 @@ bbdata_full = [
         (r'\[purple\](.+?)\[/purple\]', r'<span style="color: purple">\1</span>'),
         (r'\[white\](.+?)\[/white\]', r'<span style="color: white">\1</span>'),
         (r'\[yellow\](.+?)\[/yellow\]', r'<span style="color: yellow">\1</span>'),
-        (r'\[color=#(.+?)\](.+?)\[/color\]', r'<span style="color: #\1">\2</span>'),
+        (r'\[color=(#[0-9A-Fa-f]{6})\](.+?)\[/color\]', r'<span style="color:\1;">\2</span>'),
 
         (r'\[table\](.+?)\[/table\]', r'<table class="bbtable">\1</table>'),
         (r'\[th\](.+?)\[/th\]', r'<th>\1</th>'),
