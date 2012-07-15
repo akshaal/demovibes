@@ -345,7 +345,7 @@ def get_css_for_user(user):
     except:
         css = None
     if not css:
-        th = Theme.objects.all().order_by("-default")
+        th = Theme.objects.filter(active = True).order_by("-default")
         if th:
             css = th[0].css
         else:
