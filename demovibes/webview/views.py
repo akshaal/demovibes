@@ -364,25 +364,27 @@ class ListQueue(WebView):
         }
 
 def list_song(request, song_id):
-    song = get_object_or_404(m.Song, id=song_id)
+    song = get_object_or_404 (m.Song, id = song_id)
 
-    # We can now get any compilation data that this song is a part of
-    comps = m.Compilation.objects.filter(songs__id = song.id)
+    # Simple queries, it is expected that they are evaluated from inside the template only
+    # .. otherwise cache is quite useless. Just try to keep it simple here
+    comps = m.Compilation.objects.filter (songs__id = song.id)
+    remixes = m.Song.active.filter (songmetadata__active = True, songmetadata__remix_of_id = song.id)
 
-    # Has this song been remixed?
-    remix_list = m.SongMetaData.objects.filter(remix_of_id = song.id, active=True)
-    remix = [d.song for d in remix_list]
-    related = m.Song.tagged.related_to(song)
-    tags = song.tags
-    t2 = []
-    for tag in tags:
-        tag.count = tag.items.count()
-        t2.append(tag)
-    tags = tagging.utils.calculate_cloud(t2)
+    def calc_tag_cloud ():
+        tags = m.Tag.objects.filter (id__in = song.tags).annotate (count = Count ("items"))
+        return tagging.utils.calculate_cloud (tags)
 
-    return j2shim.r2r('webview/song_detail.html', \
-        { 'object' : song, 'vote_range': [1, 2, 3, 4, 5], 'comps' : comps, 'remix' : remix, 'related': related, 'tags': tags }\
-        , request)
+    params = {
+        'object' : song,
+        'vote_range': [1, 2, 3, 4, 5],
+        'comps' : comps,
+        'remixes' : remixes,
+        'related_f': (lambda: m.Song.tagged.related_to (song)),
+        'tags_f': calc_tag_cloud
+    }
+
+    return j2shim.r2r ('webview/song_detail.html', params, request)
 
 # This can probbably be made a generic object
 def list_screenshot(request, screenshot_id):
