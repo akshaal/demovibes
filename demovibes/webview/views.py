@@ -380,7 +380,7 @@ def list_song(request, song_id):
         'vote_range': [1, 2, 3, 4, 5],
         'comps' : comps,
         'remixes' : remixes,
-        'related_f': (lambda: m.Song.tagged.related_to (song)),
+        'related_f': (lambda: m.Song.tagged.related_to (song, num = 5)),
         'tags_f': calc_tag_cloud
     }
 
