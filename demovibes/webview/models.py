@@ -1,41 +1,47 @@
 # -*- coding: utf-8 -*-
 
-from webview.decorators import atomic
-from django.db import models
-from django.contrib.auth.models import User
+import itertools
 import datetime
-
 import sys
 import re
 import os.path
-from django.utils import simplejson
-from django.conf import settings
-from django.core.mail import EmailMessage
+import time
+import hashlib
+import random
 import dscan
 import logging
 import pycountry
+import xml.dom.minidom
+import urllib
+import cStringIO
 
-import xml.dom.minidom, urllib # Needed for XML processing
+from webview.decorators import atomic
+
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import simplejson
+from django.conf import settings
+from django.core.mail import EmailMessage
 from django.core.cache import cache
 from django.template.defaultfilters import striptags
 from django.contrib.sites.models import Site
 from django.template import Context, loader
 from django.db.models import Q as DQ
+from django.db.models import Count
 from django.db.models.signals import post_save, pre_save
+from django.db import DatabaseError
 from django.utils.translation import ugettext_lazy as _
-
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
-
-# Added for image processing/scaling
 from django.core.files.uploadedfile import SimpleUploadedFile
-import cStringIO
+
+from managers import LockingManager, ActiveSongManager
+
 from PIL import Image
 
 import tagging
-import time, hashlib
-
-import random
+import tagging.utils
+from tagging.models import TaggedItem, Tag
 
 
 # South needs to know how to introspect our custom model fields
@@ -43,56 +49,7 @@ from south.modelsinspector import add_introspection_rules
 add_introspection_rules ([], ["^webview\.models\.CountryField$"])
 
 
-class CountryField (models.CharField):
-    """Country field. Which is supposed to be rendered with countrybox support."""
-
-    def formfield (self, *args, **kwargs):
-        ff = super (CountryField, self).formfield (*args, **kwargs)
-        ff.widget.attrs ['class'] = 'country-alpha2-code-input'
-        return ff
-
-
-class IntWithComment (int):
-    def __new__ (cls, v, comment = ""):
-        x = int.__new__ (cls, v)
-        x.__comment = comment
-        return x
-
-    @property
-    def comment (self):
-        return self.__comment
-
-
-class TimeDelta(datetime.timedelta):
-    def total_seconds(self):
-        return (self.seconds + self.days * 24 * 3600)
-
-    def to_string (self, day_delim = None):
-        s = self.total_seconds()
-
-        padding = ""
-        if s < 0:
-            s = s * -1
-            padding = "-"
-
-        if day_delim:
-            days, remainder = divmod (s, 3600 * 24)
-        else:
-            days = 0
-            remainder = s
-
-        hours, remainder = divmod (remainder, 3600)
-        minutes, seconds = divmod (remainder, 60)
-
-        time = "%02d:%02d" % (minutes, seconds)
-
-        if hours or days:
-            time = "%s:" % hours + time
-
-        if days:
-            time = str (days) + day_delim + time
-
-        return padding + time
+## Constants and global variables
 
 log = logging.getLogger("webview.models")
 
@@ -108,6 +65,88 @@ country_by_code2 = dict ([(country.alpha2.lower(), country) for country in pycou
 country_codes2 = country_by_code2.keys ()
 
 
+if getattr(settings, "LOOKUP_COUNTRY", True):
+    from demovibes.ip2cc import ip2cc
+    ipdb = os.path.join(settings.SITE_ROOT, "ipcountry.db")
+    if not os.path.exists(ipdb):
+        log.info("IP2Country DB not found, creating new")
+        from ip2cc import update as ip2ccupdate
+        ip2ccupdate.create_file(ipdb)
+    ipccdb = ip2cc.CountryByIP(ipdb)
+else:
+    ipccdb = False
+
+
+uwsgi_event_server = getattr (settings, 'UWSGI_EVENT_SERVER', False)
+try:
+    # This one if preferred from uwsgi container
+    import uwsgi
+except:
+    # Otherwise (from sockulf) we use this!
+    import pickle
+    uwsgi_event_server = "HTTP"
+    uwsgi_event_server_http = getattr(settings, 'UWSGI_EVENT_SERVER_HTTP', False)
+
+
+# Used for artist / song listing
+alphalist = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+             'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+
+
+LINKSTATUS = (
+    (0, "Active"),
+    (1, "Uploaded"),
+    (2, "Disabled"),
+)
+
+
+## Top level methods
+
+
+def quickly_get_related_tags (objs, exclude_tags_str = "", limit_to_model = None, count = False):
+    """ Get tags related to the objects which are supposed to be fetched using the given
+        set of tags. Much faster (on mysql up to 5.5 at least) alternative to
+        TaggedItem.related_to.
+    """
+
+    if not objs:
+        return Tag.objects.none ()
+
+    if isinstance (objs[0], (int, long)):
+        # Object can be given by ids
+        obj_ids = objs
+    else:
+        obj_ids = [obj.id for obj in objs]
+
+    if type (obj_ids) != list:
+         # Force evaluation, avoid sub-query!
+        obj_ids = list (obj_ids)
+
+    if exclude_tags_str:
+        exclude_tag_ids = itertools.chain (*tagging.utils.get_tag_list (exclude_tags_str).values_list ('id'))
+
+    try:
+        q = Tag.objects.distinct ()
+
+        if exclude_tags_str:
+            q = q.exclude (pk__in = exclude_tag_ids)
+
+        filter_condition = DQ (items__object_id__in = obj_ids)
+        if limit_to_model:
+            obj_type = ContentType.objects.get_for_model (limit_to_model)
+            filter_condition &= DQ (items__content_type__pk = obj_type.id)
+
+        q = q.filter (filter_condition)
+
+        if count:
+            q = q.annotate (count = Count ("items"))
+
+        return q
+    except DatabaseError as err:
+        log.error ("Unable to get related tags of obj ids " + repr(obj_ids) + " and tag " + tag_str + ": " + str(err))
+        return Tag.objects.none ()
+
+
 def get_now_playing_song(create_new=False):
     queueobj = cache.get("nowplaysong")
     if not queueobj or create_new:
@@ -119,7 +158,9 @@ def get_now_playing_song(create_new=False):
         except:
             logging.info("Could not find now_playing")
             return False
+
         cache.set("nowplaysong", queueobj, 300)
+
     return queueobj
 
 
@@ -179,29 +220,6 @@ def secure_download (url, user=None):
     return url
 
 
-if getattr(settings, "LOOKUP_COUNTRY", True):
-    from demovibes.ip2cc import ip2cc
-    ipdb = os.path.join(settings.SITE_ROOT, "ipcountry.db")
-    if not os.path.exists(ipdb):
-        log.info("IP2Country DB not found, creating new")
-        from ip2cc import update as ip2ccupdate
-        ip2ccupdate.create_file(ipdb)
-    ipccdb = ip2cc.CountryByIP(ipdb)
-else:
-    ipccdb = False
-
-
-uwsgi_event_server = getattr (settings, 'UWSGI_EVENT_SERVER', False)
-try:
-    # This one if preferred from uwsgi container
-    import uwsgi
-except:
-    # Otherwise (from sockulf) we use this!
-    import pickle
-    uwsgi_event_server = "HTTP"
-    uwsgi_event_server_http = getattr(settings, 'UWSGI_EVENT_SERVER_HTTP', False)
-
-
 def send_notification(message, user, category = 0):
     d = {
         "message": message,
@@ -259,16 +277,6 @@ def add_event(event = None, user = None, eventlist = [], metadata = {}):
         uwsgi.send_uwsgi_message (uwsgi_event_server[0], uwsgi_event_server[1], 33, 17, data, 30)
 
 
-from managers import LockingManager, ActiveSongManager
-
-
-# Create your models here.
-
-#Used for artist / song listing
-alphalist = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
-             'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-
-
 def get_startswith (s):
     """Return a character that is suitable for 'startswith' field of an entity."""
 
@@ -280,6 +288,9 @@ def int_rnd_val (cls = None):
     """Get next random integer comaptiable with a db."""
 
     return random.randint(-2147483648, 2147483647)
+
+
+## Classes
 
 
 class DBSetting (models.Model):
@@ -348,6 +359,58 @@ class BaseLiveOption (object):
         dbsetting.save ()
 
         cache.set (self.__cache_key, svalue, self.__timeout)
+
+
+class CountryField (models.CharField):
+    """Country field. Which is supposed to be rendered with countrybox support."""
+
+    def formfield (self, *args, **kwargs):
+        ff = super (CountryField, self).formfield (*args, **kwargs)
+        ff.widget.attrs ['class'] = 'country-alpha2-code-input'
+        return ff
+
+
+class IntWithComment (int):
+    def __new__ (cls, v, comment = ""):
+        x = int.__new__ (cls, v)
+        x.__comment = comment
+        return x
+
+    @property
+    def comment (self):
+        return self.__comment
+
+
+class TimeDelta(datetime.timedelta):
+    def total_seconds(self):
+        return (self.seconds + self.days * 24 * 3600)
+
+    def to_string (self, day_delim = None):
+        s = self.total_seconds()
+
+        padding = ""
+        if s < 0:
+            s = s * -1
+            padding = "-"
+
+        if day_delim:
+            days, remainder = divmod (s, 3600 * 24)
+        else:
+            days = 0
+            remainder = s
+
+        hours, remainder = divmod (remainder, 3600)
+        minutes, seconds = divmod (remainder, 60)
+
+        time = "%02d:%02d" % (minutes, seconds)
+
+        if hours or days:
+            time = "%s:" % hours + time
+
+        if days:
+            time = str (days) + day_delim + time
+
+        return padding + time
 
 
 class IntegerOption (BaseLiveOption):
@@ -508,13 +571,6 @@ class GenericBaseLink(models.Model):
 
     def __unicode__(self):
         return u"%s link for %s" % (self.name, self.get_linktype_display())
-
-
-LINKSTATUS = (
-    (0, "Active"),
-    (1, "Uploaded"),
-    (2, "Disabled"),
-)
 
 
 class GenericLink(models.Model):
@@ -775,10 +831,12 @@ class Userprofile(models.Model):
         return ('dv-profile', [self.user.name])
 
 
-# Label/Producer - Depending on the content being served, this could be a number of things. If serving
-#   Real music, this would be the music label such as EMI Records, etc. If this is for game/computer music
-#   It can be used as a Publisher/Producer, such as Ocean Software, Gremlin Graphics etc.
 class Label(models.Model):
+    """ Label/Producer - Depending on the content being served, this could be a number of things.
+        If serving Real music, this would be the music label such as EMI Records, etc.
+        If this is for game/computer music It can be used as a Publisher/Producer,
+        such as Ocean Software, Gremlin Graphics etc. """
+
     STATUS_CHOICES = (
             ('A', 'Active'),
             ('I', 'Inactive'),

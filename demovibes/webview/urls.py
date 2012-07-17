@@ -172,9 +172,9 @@ urlpatterns = patterns('',
     url(r'^song/(?P<song_id>\d+)/play/$',          views.PlaySong(), name = "dv-play_song"),
     url(r'^comment/add/(?P<song_id>\d+)/$',        views.addComment(), name = "dv-addcomment"),
 
-    url(r'^tags/$',                                views.tagCloud(), name = "dv-tagcloud"),
-    url(r'^tags/(?P<tag>[^/]+)/$',                 views.tagDetail(), name = "dv-tagdetail"),
-    url(r'^song/(?P<song_id>\d+)/tags/$',          views.tagEdit(), name = "dv-songtags"),
+    url(r'^tags/$',                                views.TagCloud(), name = "dv-tagcloud"),
+    url(r'^tags/(?P<tag>[^/]+)/$',                 views.TagDetail(), name = "dv-tagdetail"),
+    url(r'^song/(?P<song_id>\d+)/tags/$',          views.TagEdit(), name = "dv-songtags"),
 
     url(r'^themes/$',                                views.ThemeList(), name = "dv-themelist"),
     url(r'^theme/(?P<theme_id>\d+)/$',               views.ThemeInfo(), name = "dv-themeinfo"),

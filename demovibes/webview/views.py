@@ -27,7 +27,6 @@ from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.cache import cache
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth import authenticate, login
-from django.db import DatabaseError
 from django.db.models import Count, Sum, Avg, Max
 from django.db.models import Q as DQ
 
@@ -1518,7 +1517,7 @@ class HelpusWithScreenshots (ListScreenshots):
             return ""
 
 
-class tagCloud(WebView):
+class TagCloud(WebView):
     template = "tag_cloud.html"
     cache_key = "tag_cloud"
     cache_duration = 24*60*60
@@ -1533,27 +1532,30 @@ class tagCloud(WebView):
         tags = m.Song.tags.cloud(min_count=min_count)
         return {'tags': tags}
 
-class tagDetail(WebView):
+class TagDetail(WebView):
     template = "tag_detail.html"
-    cache_duration = 24*60*60
+    cache_duration = 24 * 60 * 60
 
     def get_cache_key(self):
-        tag_id = cache.get("tagver", 0)
+        tag_id = cache.get ("tagver", 0)
         key = "tagdetail_%s_%s" % (self.kwargs.get("tag", ""), tag_id)
+
         return hashlib.md5(key).hexdigest()
 
     def set_cached_context(self):
-        tag = self.kwargs.get("tag", "")
-        songs = TaggedItem.objects.get_by_model(m.Song, tag)
-        try:
-            related = m.Song.tags.related(tag, counts=True)
-            related = tagging.utils.calculate_cloud(related)
-        except DatabaseError:
-            related = []
-        c = {'songs': songs, 'related': related, 'tag':tag}
-        return c
+        tag = self.kwargs.get ("tag", "")
 
-class tagEdit(SongView):
+        songs = TaggedItem.objects.get_by_model (m.Song, tag)
+        related = m.quickly_get_related_tags (songs,
+                                              exclude_tags_str = tag,
+                                              limit_to_model = m.Song,
+                                              count = True)
+
+        return {'songs'     : songs,
+                'related'   : related,
+                'tag'       : tag}
+
+class TagEdit(SongView):
     login_required=True
     template = "tag_edit.html"
 
