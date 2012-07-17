@@ -153,7 +153,7 @@ class song_finder(object):
             mood_weights = self.songweight
 
         query = self.max_songlength and Song.active.filter(song_length__lt = self.max_songlength) or Song.active.all()
-        query = query.filter (locked_until__lt = datetime.now ())
+        query = query.filter (Song.unlocked_condition())
         song = self.select_random (query)
 
         C = 0

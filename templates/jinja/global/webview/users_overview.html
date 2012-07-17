@@ -1,7 +1,9 @@
 {% extends "base/base.html" %}
 
 {% macro avg_rounded(stat) %}
-    {{ stat['avg']|round(1) }}
+    {%- if stat['avg'] -%}
+        {{ stat['avg']|round(1) }}
+    {%- endif -%}
 {% endmacro %}
 
 {# =============== list_stats macro =============== #}
