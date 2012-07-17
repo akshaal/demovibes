@@ -1550,6 +1550,7 @@ class TagDetail(WebView):
                                               exclude_tags_str = tag,
                                               limit_to_model = m.Song,
                                               count = True)
+        related = tagging.utils.calculate_cloud (related)
 
         return {'songs'     : songs,
                 'related'   : related,
