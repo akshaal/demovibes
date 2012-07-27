@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<songtypes>
+    {% for songtype in object_list %}<songtype id="{{ songtype.id }}" title="{{ songtype.title|escape }}" />{% endfor %}
+</songtypes>
