@@ -2,7 +2,6 @@ import logging
 import copy
 
 from django.conf import settings
-from django.db import transaction
 from django.contrib.auth.decorators import login_required
 from django.template import RequestContext
 from django.http import HttpResponse
@@ -11,7 +10,6 @@ from django.core.cache import cache
 import hashlib
 
 class BaseView(object):
-
     __name__ = "BaseView"
 
     methods = ("GET", "POST")
@@ -31,7 +29,7 @@ class BaseView(object):
     cache_output = False
     cache_hash_key = True
 
-    use_decorators = [transaction.commit_on_success]
+    use_decorators = []
     run_before_main = ["initialize", "run_permissions_check", "setup_session", "handle_forms", "pre_view"]
     run_after_main = ["post_view", "update_context", "close_session", "check_caching", "render"]
 

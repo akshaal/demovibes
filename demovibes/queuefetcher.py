@@ -1,19 +1,28 @@
+## Imports
+
 import sys, random
-from datetime import datetime, timedelta
 import time
 import bitly
-from os import popen
 import logging, logging.config
+
+from os import popen
+from datetime import datetime, timedelta
+
 from django.core.management import setup_environ
 import settings
 setup_environ(settings)
-from webview.models import Queue, Song, DJRandomOptions
+
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from django.db import transaction
 
+from webview.models import Queue, Song, DJRandomOptions
 from webview import common
 
-class song_finder(object):
+
+## Classes
+
+class song_finder (object):
     songweight = getattr (settings, 'SONG_WEIGHT', {'N' : 1,
                                                     1   : 40,
                                                     1.5 : 35,
@@ -37,7 +46,7 @@ class song_finder(object):
         self.timestamp = None
         self.song = None
 
-        self.log = logging.getLogger("pyAdder")
+        self.log = logging.getLogger ("queuefetcher")
 
         if not djuser:
             djuser = getattr(settings, 'DJ_USERNAME', "djrandom")
@@ -69,40 +78,19 @@ class song_finder(object):
             5   : 0
         }
 
-    def findQueued(self):
+    @transaction.commit_on_success
+    def get_next_song (self):
         """
-        Return next queued song, or a random song, or a jingle.
+        Return next song filepath to be played. This is called by sockulf when it needs a new song.
         """
 
-        queues = Queue.objects.filter (played=False, playtime__lte = datetime.now()).order_by('-priority', 'id')
+        # Force new transaction since we want to see newly committed transactions
+        # (for repeatable read isolation level which is default for innodb).
+        # Otherwise DJRandom will be unable to see newly queued songs until it queues its own song
+        # (i.e. until it saves/commits its own song into db).
+        transaction.commit ()
 
-        if not queues:
-            # Since OR queries have been problematic on production server earlier, we do this hack..
-            queues = Queue.objects.filter (played=False, playtime = None).order_by('-priority', 'id')
-
-        if settings.PLAY_JINGLES:
-            jingle = self.JingleTime()
-            if jingle:
-                return jingle
-
-        if queues:
-            # Something we should take from the queue
-            queue = queues [0]
-        else:
-            # Nothing in queue, djrandom's turn
-            song = self.getRandomSong ()
-            queue = common.queue_song (song, self.dj_user, False, True)
-
-        common.play_queued (queue)
-        return queue.song
-
-    def get_metadata(self):
-        return self.meta.encode(self.sysenc, 'replace')
-
-    def get_next_song(self):
-        """
-        Return next song filepath to be played
-        """
+        # Guard against crash-looping or whatever...
         if self.timestamp:
             delta = datetime.now() - self.timestamp
             if delta < timedelta(seconds=3):
@@ -110,10 +98,12 @@ class song_finder(object):
                 time.sleep(3)
         self.timestamp = datetime.now()
 
-        song = self.findQueued()
+        # Find queued song or ask DJRandom for one)
+        song = self.__find_queued ()
 
+        # Update information for further usage
         self.meta = u"%s - %s" % (song.artist(), song.title)
-        self.log.debug("Now playing \"%s\" [ID %s]" % (song.title, song.id))
+        self.log.debug ("Now playing \"%s\" [ID %s]" % (song.title, song.id))
         self.song = song
 
         try:
@@ -123,8 +113,43 @@ class song_finder(object):
                 filepath = song.file.path.encode(self.sysenc)
             except:
                 filepath = song.file.path
-        self.log.debug("Returning path %s" % filepath)
+
+        self.log.debug ("Returning path %s" % filepath)
+
         return filepath
+
+    def __find_queued (self):
+        """
+        Return next queued song, or a random song, or a jingle.
+        """
+
+        # Jingle time?
+        if settings.PLAY_JINGLES:
+            jingle = self.JingleTime()
+            if jingle:
+                return jingle
+
+        # Fetch from queue with playtime explicitly set
+        queues = Queue.objects.filter (played=False, playtime__lte = datetime.now()).order_by('-priority', 'id')
+
+        # Nothing explicitly set for the moment, lets check normal queue entries
+        if not queues:
+            # Since OR queries have been problematic on production server earlier, we do this hack..
+            queues = Queue.objects.filter (played=False, playtime = None).order_by ('-priority', 'id')
+
+        if queues:
+            # Something we should take from the queue
+            queue = queues [0]
+        else:
+            # Nothing in queue, DJRandom turn
+            song = self.getRandomSong ()
+            queue = common.queue_song (song, self.dj_user, False, True)
+
+        common.play_queued (queue)
+        return queue.song
+
+    def get_metadata(self):
+        return self.meta.encode(self.sysenc, 'replace')
 
     def get_site_url(self):
         current_site = Site.objects.get_current()
@@ -250,3 +275,6 @@ class song_finder(object):
                 popen(curl, 'r')
             except:
                 self.log.warning("Failed To Tweet: %s"% message)
+
+## For flyspell
+#  LocalWords:  sockulf queuefetcher innodb DJRandom filepath

@@ -250,6 +250,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django_authopenid.middleware.OpenIDMiddleware',
+    'django.middleware.transaction.TransactionMiddleware'
  #add ?profiler to url to get a profile of the page. Debug needs to be on
 )
 
