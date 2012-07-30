@@ -56,12 +56,18 @@ HAYSTACK_SITECONF = 'demovibes.search_sites'
 HAYSTACK_SEARCH_ENGINE = "whoosh"
 HAYSTACK_WHOOSH_PATH = pj("local","whoosh")
 
-DATABASE_ENGINE = 'sqlite3'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = pj('sqlite.db')             # Or path to database file if using sqlite3.
-DATABASE_USER = ''             # Not used with sqlite3.
-DATABASE_PASSWORD = ''         # Not used with sqlite3.
-DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
-DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
+DATABASES = {
+    'default': {
+        'ENGINE'    : 'django.db.backends.sqlite3',
+        'NAME'      : pj('sqlite.db'),
+        'USER'      : '',
+        'PASSWORD'  : '',
+        'HOST'      : '',
+        'PORT'      : '',
+        # Use the following on MySQL 5.5
+        # 'OPTIONS'   : {'init_command': 'SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED'},
+        }
+    }
 
 # Search results per type (group, artist, songs)
 SEARCH_LIMIT = 40
