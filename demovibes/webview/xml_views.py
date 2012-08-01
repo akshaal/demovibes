@@ -67,6 +67,18 @@ class SongInfo(XMLView):
     def set_context(self):
         return {'song': self.song}
 
+class ArtistInfo (XMLView):
+    template = "artist.xml"
+
+    def initialize (self):
+        self.artist = get_object_or_404 (Artist, **self.kwargs)
+
+    def get_cache_key (self):
+        return "artist-%s-%s" % (self.artist.id, self.artist.last_updated)
+
+    def set_context(self):
+        return {'object': self.artist}
+
 class UserView(XMLView):
     full_info = False
 
