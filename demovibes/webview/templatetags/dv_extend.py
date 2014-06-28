@@ -1,7 +1,7 @@
 import re, textwrap
 
 from demovibes.webview.models import *
-from demovibes.webview import common
+from demovibes.webview import *
 
 from django.core.paginator import Paginator
 from django import template
