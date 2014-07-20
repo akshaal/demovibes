@@ -1,7 +1,13 @@
 import re, textwrap
 
 from demovibes.webview.models import *
-from demovibes.webview import *
+
+try:
+    # TODO May be it should be fixed somehow differently
+    # This is WTF caused by a circular dependency
+    from demovibes.webview import common
+except:
+    pass
 
 from django.core.paginator import Paginator
 from django import template
