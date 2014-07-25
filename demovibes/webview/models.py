@@ -80,7 +80,7 @@ else:
 uwsgi_event_server = getattr (settings, 'UWSGI_EVENT_SERVER', False)
 try:
     # This one if preferred from uwsgi container
-    import uwsgi
+    from uwsgi import send_uwsgi_message
 except:
     # Otherwise (from sockulf) we use this!
     import pickle
@@ -262,8 +262,8 @@ def add_event(event = None, user = None, eventlist = [], metadata = {}):
     if uwsgi_event_server == "HTTP":
         data = {'data' : pickle.dumps (data)}
         data = urllib.urlencode (data)
-        logging.debug ("Event data via http: %s" % data)
         url = uwsgi_event_server_http or "http://127.0.0.1/demovibes/ajax/monitor/new/"
+
         try:
             r = urllib.urlopen (url, data)
         except:
@@ -274,7 +274,8 @@ def add_event(event = None, user = None, eventlist = [], metadata = {}):
     else:
         # send_message (host, port, modifier1, modifier2, data, timeout)
         # 33 means "marshalled messages""
-        uwsgi.send_uwsgi_message (uwsgi_event_server[0], uwsgi_event_server[1], 33, 17, data, 30)
+        # This stuff is removed in UWSGI 1.9.....
+        send_uwsgi_message (uwsgi_event_server[0], uwsgi_event_server[1], 33, 17, data, 30)
 
 
 def get_startswith (s):
