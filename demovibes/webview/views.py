@@ -29,6 +29,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth import authenticate, login
 from django.db.models import Count, Sum, Avg, Max
 from django.db.models import Q as DQ
+from django.db import transaction
 
 import logging
 import datetime
@@ -735,9 +736,13 @@ class VoteSong(AjaxifyView):
 
     @atomic("vote")
     def handle_form(self, form):
-        self.int_vote = int(form.get("vote", form.get("ajaxvote")))
-        if self.int_vote <= 5 and self.int_vote > 0:
-            self.song.set_vote(self.int_vote, self.request.user)
+        # We need to make sure that transaction is committed
+        # BEFORE lock provided by @atomic is released
+        # (otherwise we can get duplicated votes)
+        with transaction.commit_on_success():
+            self.int_vote = int(form.get("vote", form.get("ajaxvote")))
+            if self.int_vote <= 5 and self.int_vote > 0:
+                self.song.set_vote(self.int_vote, self.request.user)
 
     def make_ajax_return(self):
         s = "{{ display.song_vote(song, value) }}"

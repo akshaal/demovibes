@@ -34,6 +34,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.exceptions import MultipleObjectsReturned
 
 from managers import LockingManager, ActiveSongManager
 
@@ -1712,7 +1713,7 @@ class Song(models.Model):
             self.rating_votes = 0
 
 
-    def set_vote(self, vote, user):
+    def set_vote(self, vote, user, recovery = False):
         """
         Set new songvote for user, or update existing
         """
@@ -1722,7 +1723,16 @@ class Song(models.Model):
         if vote < 1:
             return False
 
-        obj, created = SongVote.objects.get_or_create(song = self, user=user, defaults = {'vote': vote})
+        try:
+            obj, created = SongVote.objects.get_or_create(song = self, user = user, defaults = {'vote': vote})
+        except MultipleObjectsReturned:
+            if not recovery:
+                # Fix for previously double-voted songs
+                SongVote.objects.filter(song = self, user = user).delete()
+                return self.set_vote(vote, user, recovery = True)
+            print("Error! Error! Unable to fix double voted song %s" % song)
+            return False
+
         if not created:
             obj.vote = vote
             obj.save()
