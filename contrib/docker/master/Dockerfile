@@ -48,31 +48,42 @@ RUN apt-get -y update \
     && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Setup mysql
-RUN service mysql start \
-    && sleep 2 \
-    && echo "CREATE DATABASE demovibes; GRANT ALL ON demovibes.* TO demovibes@localhost IDENTIFIED BY '__DBPASS__';" | mysql -u root \
-    && sleep 2 \
-    && service mysql stop
 
-
-
-
+# TODO!!!!!: Remove "git checkout feature/docker"
 # Check out demovibes from git, this is a separated step because it will change more often than the previous steps
 RUN apt-get -y update \
+    && service mysql start \
+    \
     && TEMP_PKGS="git libreplaygain-dev libsamplerate-dev libmp3lame-dev libshout3-dev libavcodec-dev libavformat-dev gcc build-essential" \
     && apt-get -y install --no-install-recommends $TEMP_PKGS \
+    \
     && cd /opt \
     && git clone https://github.com/akshaal/demovibes \
-    && cd demovibes/demosauce \
+    && cd demovibes \
+    && git checkout feature/docker \
+    \
+    && cd demosauce \
     && yes 'n' | ./configure \
     && make \
-    && cd ../demovibes \
+    && cd .. \
+    \
+    && DBPASS=$(head -c 10 /dev/urandom | base64 -w 0) \
+    && SECRET=$(head -c 10 /dev/urandom | base64 -w 0) \
+    && UWSGIS=$(head -c 10 /dev/urandom | base64 -w 0) \
+    \
+    && echo "CREATE DATABASE demovibes; GRANT ALL ON demovibes.* TO demovibes@localhost IDENTIFIED BY '$DBPASS';" | mysql -u root \
+    && sed -e "s%__PATH__%/opt/demovibes%g" \
+           -e "s!__DBPASS__!$DBPASS!g" \
+           -e "s!__UWSGI_ID_SECRET__!$UWSGIS!g" \
+           -e "s!__RANDOM_SECRET_KEY__!$SECRET!g" \
+           contrib/settings_local.example.py > demovibes/settings_local.py \
+    \
+    && cd demovibes \
+    && python manage.py syncdb \
+    %% python manage.py migrate \
+    \
     && apt-get -y clean \
-    && apt-get -y --auto-remove remove $TEMP_PKGS
-    && rm -rf /var/lib/apt/lists/*
-
-
-
-# TODO: Compile demousauce
-# TODO: Config everything 
+    && apt-get -y --auto-remove remove $TEMP_PKGS \
+    && rm -rf /var/lib/apt/lists/* \
+    \
+    && service mysql stop

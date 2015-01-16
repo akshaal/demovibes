@@ -54,7 +54,7 @@ DATABASES = {
         'ENGINE'    : 'django.db.backends.mysql',
         'NAME'      : 'demovibes',
         'USER'      : 'demovibes',
-        'PASSWORD'  : '__PASS__',
+        'PASSWORD'  : '__DBPASS__',
         'HOST'      : '127.0.0.1',
         'PORT'      : '',
         'OPTIONS'   : {'init_command': 'SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED'},
