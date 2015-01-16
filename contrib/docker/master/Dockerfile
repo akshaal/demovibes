@@ -80,7 +80,7 @@ RUN apt-get -y update \
     \
     && cd demovibes \
     && python manage.py syncdb \
-    %% python manage.py migrate \
+    && python manage.py migrate \
     \
     && apt-get -y clean \
     && apt-get -y --auto-remove remove $TEMP_PKGS \
