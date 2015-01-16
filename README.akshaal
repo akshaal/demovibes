@@ -1,9 +1,0 @@
-Useful during virtualenv construction:
-
-apt-get install python-dev
-apt-get install libmysqlclient-dev
-
-pip install -U -r contrib/requirements.txt --allow-unverified PIL --allow-all-external
-pip install -v uwsgi==2.0.6 --allow-unverified uwsgi --allow-all-external
-pip install gevent # for uwsgi_eventhandler2
-
