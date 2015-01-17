@@ -1,0 +1,28 @@
+server {
+    listen       0.0.0.0:80;
+    # server_name  demovibes-test;
+
+    access_log  /var/log/nginx/access.demovibes.log;
+
+    client_max_body_size 50M;
+    client_body_buffer_size 1024k;
+
+    location /static {
+        root   __PATH__;
+    }
+
+    location /media {
+        root   __DJANGO_PATH__/contrib/admin;
+    }
+
+    location ~ /demovibes/ajax/monitor/.+/ {
+        include     uwsgi_params;
+        uwsgi_pass  127.0.0.1:3032;
+        uwsgi_read_timeout 120;
+    }
+
+    location / {
+        include     uwsgi_params;
+        uwsgi_pass  127.0.0.1:3031;
+    }
+}
