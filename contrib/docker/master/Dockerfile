@@ -73,14 +73,20 @@ RUN apt-get -y update \
     \
     && echo "CREATE DATABASE demovibes; GRANT ALL ON demovibes.* TO demovibes@localhost IDENTIFIED BY '$DBPASS';" | mysql -u root \
     && sed -e "s%__PATH__%/opt/demovibes%g" \
-           -e "s!__DBPASS__!$DBPASS!g" \
-           -e "s!__UWSGI_ID_SECRET__!$UWSGIS!g" \
-           -e "s!__RANDOM_SECRET_KEY__!$SECRET!g" \
+           -e "s%__DBPASS__%$DBPASS%g" \
+           -e "s%__UWSGI_ID_SECRET__%$UWSGIS%g" \
+           -e "s%__RANDOM_SECRET_KEY__%$SECRET%g" \
            contrib/settings_local.example.py > demovibes/settings_local.py \
     \
     && cd demovibes \
-    && python manage.py syncdb \
-    && python manage.py migrate \
+    && python manage.py syncdb --noinput \
+    && python manage.py createsuperuser --noinput --username=admin "--email=admin@foo.bar" \
+    && echo 'set timeout 20; \
+             spawn python manage.py changepassword admin; \
+             expect "Password:" { send "admin\r" }; \
+             expect "Password (again):" { send "admin\r" }; \
+            ' | expect - \
+    && python manage.py migrate --noinput \
     \
     && apt-get -y clean \
     && apt-get -y --auto-remove remove $TEMP_PKGS \
