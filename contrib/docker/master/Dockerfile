@@ -30,7 +30,7 @@ RUN apt-get -y update \
     && pip install Jinja2==2.5.5 \
     && pip install MySQL-python==1.2.3 \
     && pip install PIL==1.1.7 \
-    && pip install South==0.7.3 \
+    && pip install South==0.8.1 \
     && pip install Whoosh==2.3 \
     && pip install django-authopenid==1.0.1 \
     && pip install django-extensions==0.5 \
