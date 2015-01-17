@@ -54,7 +54,7 @@ RUN apt-get -y update \
 RUN apt-get -y update \
     && service mysql start \
     \
-    && TEMP_PKGS="git libreplaygain-dev libsamplerate-dev libmp3lame-dev libshout3-dev libavcodec-dev libavformat-dev gcc build-essential" \
+    && TEMP_PKGS="git libreplaygain-dev libsamplerate-dev libmp3lame-dev libshout3-dev libavcodec-dev libavformat-dev gcc build-essential expect" \
     && apt-get -y install --no-install-recommends $TEMP_PKGS \
     \
     && cd /opt \
