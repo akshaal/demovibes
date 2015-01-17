@@ -289,268 +289,268 @@ class Migration(SchemaMigration):
         db.delete_table('webview_taghistory')
 
         # Changing field 'Theme.preview'
-        db.alter_column('webview_theme', 'preview', self.gf('models.ImageField')(null=True, blank=True))
+        db.alter_column('webview_theme', 'preview', self.gf('django.db.models.ImageField')(null=True, blank=True))
 
         # Changing field 'News.added'
-        db.alter_column('webview_news', 'added', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_news', 'added', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
 
         # Changing field 'News.last_updated'
-        db.alter_column('webview_news', 'last_updated', self.gf('models.DateTimeField')(null=True, editable=False, blank=True))
+        db.alter_column('webview_news', 'last_updated', self.gf('django.db.models.DateTimeField')(null=True, editable=False, blank=True))
 
         # Changing field 'News.icon'
-        db.alter_column('webview_news', 'icon', self.gf('models.URLField')(blank=True))
+        db.alter_column('webview_news', 'icon', self.gf('django.db.models.URLField')(blank=True))
 
         # Changing field 'SongType.symbol'
-        db.alter_column('webview_songtype', 'symbol', self.gf('models.ImageField')(null=True, blank=True))
+        db.alter_column('webview_songtype', 'symbol', self.gf('django.db.models.ImageField')(null=True, blank=True))
 
         # Changing field 'SongType.image'
-        db.alter_column('webview_songtype', 'image', self.gf('models.ImageField')(null=True, blank=True))
+        db.alter_column('webview_songtype', 'image', self.gf('django.db.models.ImageField')(null=True, blank=True))
 
         # Changing field 'RadioStream.active'
-        db.alter_column('webview_radiostream', 'active', self.gf('models.BooleanField')())
+        db.alter_column('webview_radiostream', 'active', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'Group.startswith'
-        db.alter_column('webview_group', 'startswith', self.gf('models.CharField')(max_length=1, editable=False))
+        db.alter_column('webview_group', 'startswith', self.gf('django.db.models.CharField')(max_length=1, editable=False))
 
         # Changing field 'Group.last_updated'
-        db.alter_column('webview_group', 'last_updated', self.gf('models.DateTimeField')(null=True, editable=False, blank=True))
+        db.alter_column('webview_group', 'last_updated', self.gf('django.db.models.DateTimeField')(null=True, editable=False, blank=True))
 
         # Changing field 'Group.wiki_link'
-        db.alter_column('webview_group', 'wiki_link', self.gf('models.URLField')(blank=True))
+        db.alter_column('webview_group', 'wiki_link', self.gf('django.db.models.URLField')(blank=True))
 
         # Changing field 'Group.webpage'
-        db.alter_column('webview_group', 'webpage', self.gf('models.URLField')(blank=True))
+        db.alter_column('webview_group', 'webpage', self.gf('django.db.models.URLField')(blank=True))
 
         # Changing field 'Group.group_logo'
-        db.alter_column('webview_group', 'group_logo', self.gf('models.ImageField')(null=True, blank=True))
+        db.alter_column('webview_group', 'group_logo', self.gf('django.db.models.ImageField')(null=True, blank=True))
 
         # Changing field 'Group.group_icon'
-        db.alter_column('webview_group', 'group_icon', self.gf('models.ImageField')(null=True, blank=True))
+        db.alter_column('webview_group', 'group_icon', self.gf('django.db.models.ImageField')(null=True, blank=True))
 
         # Changing field 'Song.startswith'
-        db.alter_column('webview_song', 'startswith', self.gf('models.CharField')(max_length=1, editable=False))
+        db.alter_column('webview_song', 'startswith', self.gf('django.db.models.CharField')(max_length=1, editable=False))
 
         # Changing field 'Song.file'
-        db.alter_column('webview_song', 'file', self.gf('models.FileField')())
+        db.alter_column('webview_song', 'file', self.gf('django.db.models.FileField')())
 
         # Changing field 'Song.platform'
-        db.alter_column('webview_song', 'platform_id', self.gf('models.ForeignKey')(SongPlatform, null=True, blank=True))
+        db.alter_column('webview_song', 'platform_id', self.gf('django.db.models.ForeignKey')('SongPlatform', null=True, blank=True))
 
         # Changing field 'Song.hvsc_url'
-        db.alter_column('webview_song', 'hvsc_url', self.gf('models.URLField')(blank=True))
+        db.alter_column('webview_song', 'hvsc_url', self.gf('django.db.models.URLField')(blank=True))
 
         # Changing field 'Song.added'
-        db.alter_column('webview_song', 'added', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_song', 'added', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
 
         # Changing field 'Song.last_changed'
-        db.alter_column('webview_song', 'last_changed', self.gf('models.DateTimeField')(auto_now=True))
+        db.alter_column('webview_song', 'last_changed', self.gf('django.db.models.DateTimeField')(auto_now=True))
 
         # Changing field 'Song.release_year'
-        db.alter_column('webview_song', 'release_year', self.gf('models.CharField')(max_length="4", null=True, blank=True))
+        db.alter_column('webview_song', 'release_year', self.gf('django.db.models.CharField')(max_length="4", null=True, blank=True))
 
         # Changing field 'Song.explicit'
-        db.alter_column('webview_song', 'explicit', self.gf('models.BooleanField')())
+        db.alter_column('webview_song', 'explicit', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'PrivateMessage.visible'
-        db.alter_column('webview_privatemessage', 'visible', self.gf('models.BooleanField')())
+        db.alter_column('webview_privatemessage', 'visible', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'PrivateMessage.reply_to'
-        db.alter_column('webview_privatemessage', 'reply_to_id', self.gf('models.ForeignKey')('PrivateMessage', null=True, blank=True))
+        db.alter_column('webview_privatemessage', 'reply_to_id', self.gf('django.db.models.ForeignKey')('PrivateMessage', null=True, blank=True))
 
         # Changing field 'PrivateMessage.unread'
-        db.alter_column('webview_privatemessage', 'unread', self.gf('models.BooleanField')())
+        db.alter_column('webview_privatemessage', 'unread', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'PrivateMessage.sent'
-        db.alter_column('webview_privatemessage', 'sent', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_privatemessage', 'sent', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
 
         # Changing field 'Compilation.purchase_page'
-        db.alter_column('webview_compilation', 'purchase_page', self.gf('models.URLField')(blank=True))
+        db.alter_column('webview_compilation', 'purchase_page', self.gf('django.db.models.URLField')(blank=True))
 
         # Changing field 'Compilation.cover_art'
-        db.alter_column('webview_compilation', 'cover_art', self.gf('models.ImageField')(null=True, blank=True))
+        db.alter_column('webview_compilation', 'cover_art', self.gf('django.db.models.ImageField')(null=True, blank=True))
 
         # Changing field 'Compilation.comp_icon'
-        db.alter_column('webview_compilation', 'comp_icon', self.gf('models.ImageField')(null=True, blank=True))
+        db.alter_column('webview_compilation', 'comp_icon', self.gf('django.db.models.ImageField')(null=True, blank=True))
 
         # Changing field 'Compilation.wiki_link'
-        db.alter_column('webview_compilation', 'wiki_link', self.gf('models.URLField')(blank=True))
+        db.alter_column('webview_compilation', 'wiki_link', self.gf('django.db.models.URLField')(blank=True))
 
         # Changing field 'Compilation.download_link'
-        db.alter_column('webview_compilation', 'download_link', self.gf('models.URLField')(blank=True))
+        db.alter_column('webview_compilation', 'download_link', self.gf('django.db.models.URLField')(blank=True))
 
         # Changing field 'Compilation.youtube_link'
-        db.alter_column('webview_compilation', 'youtube_link', self.gf('models.URLField')(blank=True))
+        db.alter_column('webview_compilation', 'youtube_link', self.gf('django.db.models.URLField')(blank=True))
 
         # Changing field 'Compilation.startswith'
-        db.alter_column('webview_compilation', 'startswith', self.gf('models.CharField')(max_length=1, editable=False))
+        db.alter_column('webview_compilation', 'startswith', self.gf('django.db.models.CharField')(max_length=1, editable=False))
 
         # Changing field 'Compilation.date_added'
-        db.alter_column('webview_compilation', 'date_added', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_compilation', 'date_added', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
 
         # Changing field 'Compilation.details_page'
-        db.alter_column('webview_compilation', 'details_page', self.gf('models.URLField')(blank=True))
+        db.alter_column('webview_compilation', 'details_page', self.gf('django.db.models.URLField')(blank=True))
 
         # Changing field 'SongPlatform.symbol'
-        db.alter_column('webview_songplatform', 'symbol', self.gf('models.ImageField')(null=True, blank=True))
+        db.alter_column('webview_songplatform', 'symbol', self.gf('django.db.models.ImageField')(null=True, blank=True))
 
         # Changing field 'SongPlatform.image'
-        db.alter_column('webview_songplatform', 'image', self.gf('models.ImageField')(null=True, blank=True))
+        db.alter_column('webview_songplatform', 'image', self.gf('django.db.models.ImageField')(null=True, blank=True))
 
         # Deleting field 'Userprofile.use_tags'
         db.delete_column('webview_userprofile', 'use_tags')
 
         # Changing field 'Userprofile.web_page'
-        db.alter_column('webview_userprofile', 'web_page', self.gf('models.URLField')(blank=True))
+        db.alter_column('webview_userprofile', 'web_page', self.gf('django.db.models.URLField')(blank=True))
 
         # Changing field 'Userprofile.pm_accepted_upload'
-        db.alter_column('webview_userprofile', 'pm_accepted_upload', self.gf('models.BooleanField')())
+        db.alter_column('webview_userprofile', 'pm_accepted_upload', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'Userprofile.email_on_group_add'
-        db.alter_column('webview_userprofile', 'email_on_group_add', self.gf('models.BooleanField')())
+        db.alter_column('webview_userprofile', 'email_on_group_add', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'Userprofile.email_on_pm'
-        db.alter_column('webview_userprofile', 'email_on_pm', self.gf('models.BooleanField')())
+        db.alter_column('webview_userprofile', 'email_on_pm', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'Userprofile.email_on_artist_add'
-        db.alter_column('webview_userprofile', 'email_on_artist_add', self.gf('models.BooleanField')())
+        db.alter_column('webview_userprofile', 'email_on_artist_add', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'Userprofile.email_on_artist_comment'
-        db.alter_column('webview_userprofile', 'email_on_artist_comment', self.gf('models.BooleanField')())
+        db.alter_column('webview_userprofile', 'email_on_artist_comment', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'Userprofile.custom_css'
-        db.alter_column('webview_userprofile', 'custom_css', self.gf('models.URLField')(blank=True))
+        db.alter_column('webview_userprofile', 'custom_css', self.gf('django.db.models.URLField')(blank=True))
 
         # Changing field 'Userprofile.avatar'
-        db.alter_column('webview_userprofile', 'avatar', self.gf('models.ImageField')(null=True, blank=True))
+        db.alter_column('webview_userprofile', 'avatar', self.gf('django.db.models.ImageField')(null=True, blank=True))
 
         # Changing field 'Userprofile.paginate_favorites'
-        db.alter_column('webview_userprofile', 'paginate_favorites', self.gf('models.BooleanField')())
+        db.alter_column('webview_userprofile', 'paginate_favorites', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'SongVote.added'
-        db.alter_column('webview_songvote', 'added', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_songvote', 'added', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
 
         # Changing field 'CompilationVote.added'
-        db.alter_column('webview_compilationvote', 'added', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_compilationvote', 'added', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
 
         # Changing field 'UploadTicket.added'
-        db.alter_column('webview_uploadticket', 'added', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_uploadticket', 'added', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
 
         # Changing field 'GroupVote.added'
-        db.alter_column('webview_groupvote', 'added', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_groupvote', 'added', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
 
         # Changing field 'Faq.added'
-        db.alter_column('webview_faq', 'added', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_faq', 'added', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
 
         # Changing field 'Faq.last_updated'
-        db.alter_column('webview_faq', 'last_updated', self.gf('models.DateTimeField')(null=True, editable=False, blank=True))
+        db.alter_column('webview_faq', 'last_updated', self.gf('django.db.models.DateTimeField')(null=True, editable=False, blank=True))
 
         # Changing field 'Faq.active'
-        db.alter_column('webview_faq', 'active', self.gf('models.BooleanField')())
+        db.alter_column('webview_faq', 'active', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'Link.added'
-        db.alter_column('webview_link', 'added', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_link', 'added', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
 
         # Changing field 'Link.last_updated'
-        db.alter_column('webview_link', 'last_updated', self.gf('models.DateTimeField')(null=True, editable=False, blank=True))
+        db.alter_column('webview_link', 'last_updated', self.gf('django.db.models.DateTimeField')(null=True, editable=False, blank=True))
 
         # Changing field 'Link.link_url'
-        db.alter_column('webview_link', 'link_url', self.gf('models.URLField')(unique=True))
+        db.alter_column('webview_link', 'link_url', self.gf('django.db.models.URLField')(unique=True))
 
         # Changing field 'Link.link_image'
-        db.alter_column('webview_link', 'link_image', self.gf('models.ImageField')(null=True, blank=True))
+        db.alter_column('webview_link', 'link_image', self.gf('django.db.models.ImageField')(null=True, blank=True))
 
         # Changing field 'Link.priority'
-        db.alter_column('webview_link', 'priority', self.gf('models.BooleanField')())
+        db.alter_column('webview_link', 'priority', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'Artist.startswith'
-        db.alter_column('webview_artist', 'startswith', self.gf('models.CharField')(max_length=1, editable=False))
+        db.alter_column('webview_artist', 'startswith', self.gf('django.db.models.CharField')(max_length=1, editable=False))
 
         # Changing field 'Artist.artist_pic'
-        db.alter_column('webview_artist', 'artist_pic', self.gf('models.ImageField')(null=True, blank=True))
+        db.alter_column('webview_artist', 'artist_pic', self.gf('django.db.models.ImageField')(null=True, blank=True))
 
         # Changing field 'Artist.webpage'
-        db.alter_column('webview_artist', 'webpage', self.gf('models.URLField')(blank=True))
+        db.alter_column('webview_artist', 'webpage', self.gf('django.db.models.URLField')(blank=True))
 
         # Changing field 'Artist.is_deceased'
-        db.alter_column('webview_artist', 'is_deceased', self.gf('models.BooleanField')())
+        db.alter_column('webview_artist', 'is_deceased', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'Artist.last_updated'
-        db.alter_column('webview_artist', 'last_updated', self.gf('models.DateTimeField')(null=True, editable=False, blank=True))
+        db.alter_column('webview_artist', 'last_updated', self.gf('django.db.models.DateTimeField')(null=True, editable=False, blank=True))
 
         # Changing field 'Artist.alias_of'
-        db.alter_column('webview_artist', 'alias_of_id', self.gf('models.ForeignKey')('self', null=True, blank=True))
+        db.alter_column('webview_artist', 'alias_of_id', self.gf('django.db.models.ForeignKey')('self', null=True, blank=True))
 
         # Changing field 'Artist.wiki_link'
-        db.alter_column('webview_artist', 'wiki_link', self.gf('models.URLField')(blank=True))
+        db.alter_column('webview_artist', 'wiki_link', self.gf('django.db.models.URLField')(blank=True))
 
         # Changing field 'Queue.requested'
-        db.alter_column('webview_queue', 'requested', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_queue', 'requested', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
 
         # Changing field 'Queue.played'
-        db.alter_column('webview_queue', 'played', self.gf('models.BooleanField')())
+        db.alter_column('webview_queue', 'played', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'Queue.priority'
-        db.alter_column('webview_queue', 'priority', self.gf('models.BooleanField')())
+        db.alter_column('webview_queue', 'priority', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'LinkCategory.icon'
-        db.alter_column('webview_linkcategory', 'icon', self.gf('models.ImageField')(null=True, blank=True))
+        db.alter_column('webview_linkcategory', 'icon', self.gf('django.db.models.ImageField')(null=True, blank=True))
 
         # Changing field 'LinkCategory.id_slug'
-        db.alter_column('webview_linkcategory', 'id_slug', self.gf('models.SlugField')(_("Slug")))
+        db.alter_column('webview_linkcategory', 'id_slug', self.gf('django.db.models.SlugField')(_("Slug")))
 
         # Changing field 'SongComment.added'
-        db.alter_column('webview_songcomment', 'added', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_songcomment', 'added', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
 
         # Changing field 'Logo.active'
-        db.alter_column('webview_logo', 'active', self.gf('models.BooleanField')())
+        db.alter_column('webview_logo', 'active', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'Logo.file'
-        db.alter_column('webview_logo', 'file', self.gf('models.FileField')())
+        db.alter_column('webview_logo', 'file', self.gf('django.db.models.FileField')())
 
         # Changing field 'Label.startswith'
-        db.alter_column('webview_label', 'startswith', self.gf('models.CharField')(max_length=1, editable=False))
+        db.alter_column('webview_label', 'startswith', self.gf('django.db.models.CharField')(max_length=1, editable=False))
 
         # Changing field 'Label.last_updated'
-        db.alter_column('webview_label', 'last_updated', self.gf('models.DateTimeField')(null=True, editable=False, blank=True))
+        db.alter_column('webview_label', 'last_updated', self.gf('django.db.models.DateTimeField')(null=True, editable=False, blank=True))
 
         # Changing field 'Label.wiki_link'
-        db.alter_column('webview_label', 'wiki_link', self.gf('models.URLField')(blank=True))
+        db.alter_column('webview_label', 'wiki_link', self.gf('django.db.models.URLField')(blank=True))
 
         # Changing field 'Label.webpage'
-        db.alter_column('webview_label', 'webpage', self.gf('models.URLField')(blank=True))
+        db.alter_column('webview_label', 'webpage', self.gf('django.db.models.URLField')(blank=True))
 
         # Changing field 'Label.label_icon'
-        db.alter_column('webview_label', 'label_icon', self.gf('models.ImageField')(null=True, blank=True))
+        db.alter_column('webview_label', 'label_icon', self.gf('django.db.models.ImageField')(null=True, blank=True))
 
         # Changing field 'Label.logo'
-        db.alter_column('webview_label', 'logo', self.gf('models.ImageField')(null=True, blank=True))
+        db.alter_column('webview_label', 'logo', self.gf('django.db.models.ImageField')(null=True, blank=True))
 
         # Changing field 'Favorite.added'
-        db.alter_column('webview_favorite', 'added', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_favorite', 'added', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
 
         # Changing field 'SongApprovals.approved'
-        db.alter_column('webview_songapprovals', 'approved', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_songapprovals', 'approved', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
 
         # Changing field 'Screenshot.startswith'
-        db.alter_column('webview_screenshot', 'startswith', self.gf('models.CharField')(max_length=1, editable=False))
+        db.alter_column('webview_screenshot', 'startswith', self.gf('django.db.models.CharField')(max_length=1, editable=False))
 
         # Changing field 'Screenshot.last_updated'
-        db.alter_column('webview_screenshot', 'last_updated', self.gf('models.DateTimeField')(null=True, editable=False, blank=True))
+        db.alter_column('webview_screenshot', 'last_updated', self.gf('django.db.models.DateTimeField')(null=True, editable=False, blank=True))
 
         # Changing field 'Screenshot.image'
-        db.alter_column('webview_screenshot', 'image', self.gf('models.ImageField')(null=True, blank=True))
+        db.alter_column('webview_screenshot', 'image', self.gf('django.db.models.ImageField')(null=True, blank=True))
 
         # Changing field 'Screenshot.active'
-        db.alter_column('webview_screenshot', 'active', self.gf('models.BooleanField')())
+        db.alter_column('webview_screenshot', 'active', self.gf('django.db.models.BooleanField')())
 
         # Changing field 'Oneliner.added'
-        db.alter_column('webview_oneliner', 'added', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_oneliner', 'added', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
 
         # Changing field 'SongDownload.added'
-        db.alter_column('webview_songdownload', 'added', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_songdownload', 'added', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
 
         # Changing field 'ArtistVote.added'
-        db.alter_column('webview_artistvote', 'added', self.gf('models.DateTimeField')(auto_now_add=True))
+        db.alter_column('webview_artistvote', 'added', self.gf('django.db.models.DateTimeField')(auto_now_add=True))
     
     
     models = {
