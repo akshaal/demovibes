@@ -67,15 +67,8 @@ RUN apt-get -y update \
     && make \
     && cd .. \
     \
-    && DBPASS=$(head -c 10 /dev/urandom | base64 -w 0) \
-    && SECRET=$(head -c 10 /dev/urandom | base64 -w 0) \
-    && UWSGIS=$(head -c 10 /dev/urandom | base64 -w 0) \
-    \
-    && echo "CREATE DATABASE demovibes; GRANT ALL ON demovibes.* TO demovibes@localhost IDENTIFIED BY '$DBPASS';" | mysql -u root \
+    && echo "CREATE DATABASE demovibes; GRANT ALL ON demovibes.* TO demovibes@localhost IDENTIFIED BY '__DBPASS__';" | mysql -u root \
     && sed -e "s%__PATH__%/opt/demovibes%g" \
-           -e "s%__DBPASS__%$DBPASS%g" \
-           -e "s%__UWSGI_ID_SECRET__%$UWSGIS%g" \
-           -e "s%__RANDOM_SECRET_KEY__%$SECRET%g" \
            contrib/settings_local.example.py > demovibes/settings_local.py \
     \
     && cd demovibes \
